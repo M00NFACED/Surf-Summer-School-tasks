@@ -10,7 +10,7 @@
 | API | Client API по `01-analysis/api/openapi.yaml` |
 | Локальная инфраструктура | Go + PostgreSQL в Docker для разработки и тестов |
 | Источник экранов | `01-analysis/3-design-brief/screen-registry.md` и `01-analysis/5-mobile-app-spec/` |
-| Статус | План реализации |
+| Статус | Stage 1: инфраструктурная часть реализована; Docker runtime требует рабочий daemon |
 | Ограничение | Backend production остаётся внешней black-box системой |
 
 ## 2. Цели и правила выполнения
@@ -39,20 +39,20 @@
 - [ ] Настроить Gradle Kotlin, Compose Multiplatform, Ktor Client, Ktor serialization и общие source sets.
 - [ ] Создать `client/src/commonMain/kotlin/org/example/client/` с корневой навигацией и DI.
 - [ ] Создать package-by-feature каталоги `auth`, `schedule`, `booking` с `presentation/`, `domain/`, `data/`.
-- [ ] Создать `androidApp/src/main/res/xml/network_security_config.xml` с cleartext только для `10.0.2.2`, `127.0.0.1`, `localhost`.
+- [x] Создать `androidApp/src/main/res/xml/network_security_config.xml` с cleartext только для `10.0.2.2`, `127.0.0.1`, `localhost`.
 - [ ] Вынести base URL в debug/local конфигурацию: Emulator `http://10.0.2.2:8080`, desktop/local `http://127.0.0.1:8080`.
-- [ ] Добавить `.env.example` с именами переменных без секретов; реальные credentials исключить из Git.
+- [x] Добавить `.env.example` с именами переменных без секретов; реальные credentials исключить из Git.
 
 ### 4.2. OpenAPI и локальный backend
 
 - [ ] Проверить `01-analysis/api/openapi.yaml` как единственный контракт и зафиксировать его версию в CI.
 - [ ] Поднять Docker Compose с сервисами `api` и `postgres`, healthcheck и отдельным volume для БД.
-- [ ] Реализовать в Go каркасы всех операций контракта или тестовые адаптеры с теми же путями, DTO и кодами ответов.
-- [ ] Создать PostgreSQL migrations для Client, Instructor, TrainingSlot, EquipmentOption, Booking, Rating и NotificationDevice.
-- [ ] Добавить fixtures для двух форматов, инструкторов, 8/16 вместимости, проката и свободных мест.
-- [ ] Реализовать атомарную проверку capacity и rental-фонда в локальном backend для теста 409.
-- [ ] Добавить проверку ограничения одной брони на клиента/слот и запрета бронирования отменённого слота.
-- [ ] Добавить `/health` вне клиентского контракта только как инфраструктурный endpoint.
+- [x] Реализовать в Go каркасы всех операций контракта или тестовые адаптеры с теми же путями, DTO и кодами ответов.
+- [x] Создать PostgreSQL migrations для Client, Instructor, TrainingSlot, EquipmentOption, Booking, Rating и NotificationDevice.
+- [x] Добавить fixtures для двух форматов, инструкторов, 8/16 вместимости, проката и свободных мест.
+- [x] Реализовать атомарную проверку capacity и rental-фонда в локальном backend для теста 409.
+- [x] Добавить проверку ограничения одной брони на клиента/слот и запрета бронирования отменённого слота.
+- [x] Добавить `/health` вне клиентского контракта только как инфраструктурный endpoint.
 
 ### 4.3. Общий Ktor-клиент и кэш
 

@@ -49,7 +49,15 @@
 
 - Запрос: Настройка правил разработки AGENTS.md и плана реализации.
 - Принятые решения: OpenAPI закреплён как единственный контракт; клиент ограничен ролью Клиента и тремя feature-батчами; локальный Go/PostgreSQL backend используется только для разработки и тестов; production backend остаётся black-box; зафиксированы package-by-feature, Compose Multiplatform, Ktor, base URL и Android network security правила.
-- Артефакты: `AGENTS.md`, `01-analysis/implementation-plan.md`.
+- Артефакты: `AGENTS.md`, `IMPLEMENTATION_PLAN.md`.
 - План: Stage 1 — инфраструктура и Docker backend; Stage 2 — OTP (`SCR-001`, `SCR-002`); Stage 3 — расписание и Offline-кэш (`SCR-003`); Stage 4 — детали слота и бронирование с rental и `409` (`SCR-004`, `SCR-005`).
 - Проверка: обязательные секции AGENTS и чек-листы этапов созданы; правила BR-004, BR-005, BR-006, BR-007, BR-011 и traceability BR/FR/NFR/SCR/UC отражены.
 - Статус: правила агента и план реализации готовы к использованию на следующем этапе.
+
+### 2026-09-24 — Сессия 06
+
+- Запрос: Реализация инфраструктуры, Docker backend и network security.
+- Принятые решения: перенести план в `IMPLEMENTATION_PLAN.md`; реализовать локальный Go/PostgreSQL backend по OpenAPI; хранить OTP в памяти и печатать шестизначный код в stdout; применять транзакционную блокировку слота и rental-опций; не добавлять онлайн-оплату.
+- Артефакты: `IMPLEMENTATION_PLAN.md`, `backend/compose.yaml`, `backend/Dockerfile`, `backend/go.mod`, `backend/go.sum`, `backend/cmd/server/`, `backend/internal/`, `backend/migrations/`, `backend/seed/`, `client/androidApp/src/main/AndroidManifest.xml`, `client/androidApp/src/main/res/xml/network_security_config.xml`.
+- Проверка: `go vet ./...` и `go test ./...` прошли; `docker compose config --no-interpolate` прошёл; SQL static checks подтвердили 7 таблиц, 8/16 constraints, 5 инструкторов и 7-дневные fixtures; handler test подтвердил HTTP 202 и OTP stdout-лог.
+- Runtime: Docker Desktop Linux engine возвращает HTTP 500; контейнеры не запущены, миграции в БД и curl `/health`/`POST /auth/request-code` фактически не выполнены. Повторить после восстановления daemon.
