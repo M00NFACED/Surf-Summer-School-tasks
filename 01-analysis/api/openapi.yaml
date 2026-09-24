@@ -1,0 +1,930 @@
+openapi: 3.0.3
+info:
+  title: Surf Climbing Gym Client API
+  version: 0.1.0
+  description: |
+    Client API для мобильного приложения Клиента скалодрома «Вертикаль».
+    Существующий backend является источником истины по слотам, свободным местам,
+    броням и статусам. В MVP нет онлайн-оплаты: после брони отображается
+    «Оплата на месте».
+  contact:
+    name: Surf product team
+servers:
+  - url: /api
+    description: Client API deployment
+tags:
+  - name: Auth
+    description: Авторизация Клиента по номеру телефона и SMS-коду
+  - name: Slots
+    description: Расписание и детали тренировок
+  - name: Bookings
+    description: Брони, отмена и оценка инструктора
+  - name: Devices
+    description: Регистрация push-токена устройства
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/request-code:
+    post:
+      tags:
+        - Auth
+      operationId: requestAuthCode
+      summary: Запросить SMS-код
+      description: Отправляет одноразовый код на номер телефона в формате E.164. BR-001, FR-001, UC-001.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestCodeRequest'
+      responses:
+        '202':
+          description: Запрос SMS-кода принят
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestCodeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /auth/verify-code:
+    post:
+      tags:
+        - Auth
+      operationId: verifyAuthCode
+      summary: Проверить SMS-код
+      description: Проверяет одноразовый код и выдаёт Bearer-токен клиента. BR-001, FR-001, UC-001.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyCodeRequest'
+      responses:
+        '200':
+          description: Код подтверждён, токен выдан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /slots:
+    get:
+      tags:
+        - Slots
+      operationId: listSlots
+      summary: Получить расписание слотов
+      description: |
+        Возвращает слоты на ближайшие 7 дней по умолчанию. Клиент может передать
+        период, формат «Новичковый болдеринг» / «Трассы с верёвкой» и инструктора.
+        BR-002, BR-003, BR-014, FR-002, UC-002.
+      parameters:
+        - $ref: '#/components/parameters/FromQuery'
+        - $ref: '#/components/parameters/ToQuery'
+        - $ref: '#/components/parameters/FormatQuery'
+        - $ref: '#/components/parameters/InstructorQuery'
+      responses:
+        '200':
+          description: Расписание возвращено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlotListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /slots/{id}:
+    get:
+      tags:
+        - Slots
+      operationId: getSlot
+      summary: Получить детали слота
+      description: Возвращает время, формат, инструктора, адрес, свободные места и варианты проката. BR-002, BR-006, BR-014, FR-003, UC-002.
+      parameters:
+        - $ref: '#/components/parameters/SlotId'
+      responses:
+        '200':
+          description: Детали слота возвращены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingSlot'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /bookings:
+    post:
+      tags:
+        - Bookings
+      operationId: createBooking
+      summary: Создать бронь на одного клиента
+      description: |
+        Создаёт одну бронь с выбором собственного снаряжения или проката.
+        Backend атомарно проверяет место и остаток проката. В MVP создаётся
+        только payment_method=on_site. BR-004, BR-005, BR-006, BR-011, BR-013.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+      responses:
+        '201':
+          description: Бронь создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /bookings/my:
+    get:
+      tags:
+        - Bookings
+      operationId: listMyBookings
+      summary: Получить мои брони
+      description: Возвращает активные и прошедшие брони текущего Клиента с их статусами. BR-001, BR-005, BR-008, BR-009, FR-007.
+      responses:
+        '200':
+          description: Список броней возвращён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyBookingsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /bookings/{id}/cancel:
+    post:
+      tags:
+        - Bookings
+      operationId: cancelBooking
+      summary: Отменить бронь клиентом
+      description: Проверяет владение бронью и окно отмены не позднее чем за 2 часа до старта. BR-007, BR-013, FR-008, UC-004.
+      parameters:
+        - $ref: '#/components/parameters/BookingId'
+      responses:
+        '200':
+          description: Бронь отменена клиентом
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /bookings/{id}/rating:
+    post:
+      tags:
+        - Bookings
+      operationId: rateInstructor
+      summary: Оценить инструктора
+      description: Принимает одну оценку от 1 до 5 только после завершения тренировки. BR-009, FR-010, UC-006.
+      parameters:
+        - $ref: '#/components/parameters/BookingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RatingRequest'
+      responses:
+        '201':
+          description: Оценка сохранена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /devices/push-token:
+    post:
+      tags:
+        - Devices
+      operationId: registerPushToken
+      summary: Зарегистрировать push-токен устройства
+      description: Регистрирует или обновляет токен текущего Клиента для уведомления об отмене скалодромом. BR-008, BR-010, FR-011.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PushTokenRequest'
+      responses:
+        '201':
+          description: Push-токен зарегистрирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationDevice'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    FromQuery:
+      name: from
+      in: query
+      required: false
+      description: Начало периода ISO 8601. Если не передан, Client API использует ближайшие 7 дней.
+      schema:
+        type: string
+        format: date-time
+    ToQuery:
+      name: to
+      in: query
+      required: false
+      description: Конец периода ISO 8601. Если не передан, используется конец горизонта 7 дней.
+      schema:
+        type: string
+        format: date-time
+    FormatQuery:
+      name: format
+      in: query
+      required: false
+      description: Фильтр формата тренировки.
+      schema:
+        $ref: '#/components/schemas/TrainingFormat'
+    InstructorQuery:
+      name: instructor_id
+      in: query
+      required: false
+      description: UUID инструктора.
+      schema:
+        type: string
+        format: uuid
+    SlotId:
+      name: id
+      in: path
+      required: true
+      description: UUID слота.
+      schema:
+        type: string
+        format: uuid
+    BookingId:
+      name: id
+      in: path
+      required: true
+      description: UUID брони.
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    BadRequest:
+      description: Некорректные данные, нарушение бизнес-правила или дедлайна
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Отсутствует или недействителен Bearer-токен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Конфликт состояния или свободного места
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    TooManyRequests:
+      description: Слишком много запросов кода или авторизации
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ServiceUnavailable:
+      description: Внешний сервис временно недоступен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+        - request_id
+      properties:
+        code:
+          type: string
+          description: Машиночитаемый код ошибки.
+          example: SLOT_FULL
+        message:
+          type: string
+          description: Безопасное сообщение для пользователя.
+          example: Свободных мест больше нет
+        request_id:
+          type: string
+          format: uuid
+          description: Идентификатор запроса для диагностики.
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+
+    ErrorDetail:
+      type: object
+      required:
+        - field
+        - issue
+      properties:
+        field:
+          type: string
+          example: equipment.shoes
+        issue:
+          type: string
+          example: RENTAL_UNAVAILABLE
+
+    RequestCodeRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - phone
+      properties:
+        phone:
+          type: string
+          pattern: '^\+7[0-9]{10}$'
+          example: '+79991234567'
+          description: Номер телефона в формате E.164 для рынка +7.
+
+    RequestCodeResponse:
+      type: object
+      required:
+        - status
+        - message
+        - expires_in
+      properties:
+        status:
+          type: string
+          enum:
+            - code_sent
+        message:
+          type: string
+          example: Код отправлен
+        expires_in:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 300
+        retry_after:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 60
+
+    VerifyCodeRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - phone
+        - code
+      properties:
+        phone:
+          type: string
+          pattern: '^\+7[0-9]{10}$'
+          example: '+79991234567'
+        code:
+          type: string
+          pattern: '^[0-9]{4,8}$'
+          example: '123456'
+
+    TokenResponse:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - expires_in
+        - client
+      properties:
+        access_token:
+          type: string
+          description: Bearer-токен клиента.
+        token_type:
+          type: string
+          enum:
+            - Bearer
+        expires_in:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 3600
+        client:
+          $ref: '#/components/schemas/Client'
+
+    Client:
+      type: object
+      required:
+        - id
+        - phone
+      properties:
+        id:
+          type: string
+          format: uuid
+        phone:
+          type: string
+          pattern: '^\+7[0-9]{10}$'
+          example: '+79991234567'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TrainingFormat:
+      type: string
+      description: Формат тренировки.
+      enum:
+        - novice_bouldering
+        - rope_routes
+      example: novice_bouldering
+
+    SlotStatus:
+      type: string
+      description: Статус слота на стороне источника истины.
+      enum:
+        - available
+        - cancelled
+        - completed
+      example: available
+
+    BookingStatus:
+      type: string
+      description: Статус брони клиента.
+      enum:
+        - confirmed
+        - cancelled_by_client
+        - cancelled_by_venue
+        - completed
+        - rated
+      example: confirmed
+
+    EquipmentType:
+      type: string
+      description: Тип прокатного снаряжения.
+      enum:
+        - climbing_shoes
+        - harness_system
+      example: climbing_shoes
+
+    EquipmentSource:
+      type: string
+      description: Источник снаряжения клиента.
+      enum:
+        - own
+        - rental
+      example: rental
+
+    PaymentMethod:
+      type: string
+      description: Способ оплаты MVP. Онлайн-оплата не поддерживается.
+      enum:
+        - on_site
+      example: on_site
+
+    Platform:
+      type: string
+      description: Платформа push-устройства.
+      enum:
+        - ios
+        - android
+      example: android
+
+    Instructor:
+      type: object
+      required:
+        - id
+        - full_name
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+        full_name:
+          type: string
+          minLength: 1
+          example: Анна Петрова
+        is_active:
+          type: boolean
+          example: true
+
+    EquipmentOption:
+      type: object
+      required:
+        - id
+        - type
+        - name
+        - price
+        - total_quantity
+        - available_quantity
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+        slot_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Контекст слота; null для глобальной позиции фонда.
+        type:
+          $ref: '#/components/schemas/EquipmentType'
+        name:
+          type: string
+          minLength: 1
+          example: Скальники
+        size:
+          type: string
+          nullable: true
+          example: M
+        price:
+          type: number
+          format: double
+          minimum: 0
+          example: 450
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          default: RUB
+          example: RUB
+        total_quantity:
+          type: integer
+          format: int32
+          minimum: 0
+        available_quantity:
+          type: integer
+          format: int32
+          minimum: 0
+        is_active:
+          type: boolean
+
+    TrainingSlotSummary:
+      type: object
+      required:
+        - id
+        - starts_at
+        - ends_at
+        - format
+        - zone
+        - address
+        - instructor
+        - capacity
+        - available_places
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        format:
+          $ref: '#/components/schemas/TrainingFormat'
+        zone:
+          type: string
+          minLength: 1
+          example: Зона A
+        address:
+          type: string
+          minLength: 1
+          example: Москва, ул. Вертикальная, 1
+        instructor:
+          $ref: '#/components/schemas/Instructor'
+        capacity:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 16
+        available_places:
+          type: integer
+          format: int32
+          minimum: 0
+        status:
+          $ref: '#/components/schemas/SlotStatus'
+        cancellation_reason:
+          type: string
+          nullable: true
+          example: Профилактика трасс
+
+    TrainingSlot:
+      allOf:
+        - $ref: '#/components/schemas/TrainingSlotSummary'
+        - type: object
+          required:
+            - equipment_options
+          properties:
+            equipment_options:
+              type: array
+              items:
+                $ref: '#/components/schemas/EquipmentOption'
+
+    SlotListResponse:
+      type: object
+      required:
+        - from
+        - to
+        - items
+      properties:
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrainingSlotSummary'
+
+    OwnEquipmentSelection:
+      type: object
+      additionalProperties: false
+      required:
+        - source
+      properties:
+        source:
+          type: string
+          enum:
+            - own
+
+    RentalEquipmentSelection:
+      type: object
+      additionalProperties: false
+      required:
+        - source
+        - option_id
+      properties:
+        source:
+          type: string
+          enum:
+            - rental
+        option_id:
+          type: string
+          format: uuid
+
+    EquipmentSelection:
+      oneOf:
+        - $ref: '#/components/schemas/OwnEquipmentSelection'
+        - $ref: '#/components/schemas/RentalEquipmentSelection'
+
+    EquipmentSelections:
+      type: object
+      additionalProperties: false
+      required:
+        - shoes
+        - harness
+      properties:
+        shoes:
+          $ref: '#/components/schemas/EquipmentSelection'
+        harness:
+          $ref: '#/components/schemas/EquipmentSelection'
+
+    CancellationInfo:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - cancelled_by_client
+            - cancelled_by_venue
+        reason:
+          type: string
+          nullable: true
+          example: Проверка снаряжения
+        cancelled_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateBookingRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - slot_id
+        - equipment
+        - payment_method
+      properties:
+        slot_id:
+          type: string
+          format: uuid
+        equipment:
+          $ref: '#/components/schemas/EquipmentSelections'
+        payment_method:
+          $ref: '#/components/schemas/PaymentMethod'
+
+    Rating:
+      type: object
+      required:
+        - id
+        - booking_id
+        - instructor
+        - score
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        booking_id:
+          type: string
+          format: uuid
+        instructor:
+          $ref: '#/components/schemas/Instructor'
+        score:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 5
+        created_at:
+          type: string
+          format: date-time
+
+    Booking:
+      type: object
+      required:
+        - id
+        - slot
+        - status
+        - equipment
+        - payment_method
+        - cancel_deadline
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        slot:
+          $ref: '#/components/schemas/TrainingSlotSummary'
+        status:
+          $ref: '#/components/schemas/BookingStatus'
+        equipment:
+          $ref: '#/components/schemas/EquipmentSelections'
+        payment_method:
+          $ref: '#/components/schemas/PaymentMethod'
+        cancel_deadline:
+          type: string
+          format: date-time
+        cancellation:
+          $ref: '#/components/schemas/CancellationInfo'
+        created_at:
+          type: string
+          format: date-time
+        cancelled_at:
+          type: string
+          format: date-time
+          nullable: true
+        rating:
+          $ref: '#/components/schemas/Rating'
+
+    MyBookingsResponse:
+      type: object
+      required:
+        - active
+        - history
+      properties:
+        active:
+          type: array
+          items:
+            $ref: '#/components/schemas/Booking'
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/Booking'
+
+    RatingRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - score
+      properties:
+        score:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 5
+          example: 5
+
+    PushTokenRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - platform
+        - push_token
+        - is_enabled
+      properties:
+        platform:
+          $ref: '#/components/schemas/Platform'
+        push_token:
+          type: string
+          minLength: 1
+          example: fcm-device-token
+        is_enabled:
+          type: boolean
+          default: true
+
+    NotificationDevice:
+      type: object
+      required:
+        - id
+        - client_id
+        - platform
+        - push_token
+        - is_enabled
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        client_id:
+          type: string
+          format: uuid
+        platform:
+          $ref: '#/components/schemas/Platform'
+        push_token:
+          type: string
+          minLength: 1
+        is_enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time

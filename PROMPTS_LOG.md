@@ -28,3 +28,11 @@
 - Артефакты: `01-analysis/2-requirements/01-business-requirements.md`, `02-functional-requirements.md`, `03-non-functional-requirements.md`, `04-user-stories.md`, `05-use-cases.md`, `06-constraints-and-scope.md`, `README.md`.
 - Трассируемость: в `README.md` добавлена матрица `BR → US → UC → FR → NFR`; use cases содержат предусловия, Happy Path, альтернативы и потоки исключений.
 - Открытые вопросы: контрактные названия методов Client API и точный внешний поставщик SMS/Push будут уточнены на этапе API и дизайна.
+
+### 2026-09-24 — Сессия 03
+
+- Запрос: подготовить архитектурный план мобильного клиента, реестр экранов, дизайн-бриф, концептуальную и логическую модель данных, sequence-схемы и OpenAPI-контракт Client API.
+- Принятые решения: зафиксировать 8 экранов `SCR-001…SCR-008`; описать push deep link в детали брони; хранить источник истины в существующем backend; использовать `BookingEquipment` как связь many-to-many; закрепить `HTTP 201` для успешной брони, `HTTP 409` для конкуренции и `HTTP 400` для нарушения окна отмены; phone validation `+7XXXXXXXXXX`; payment method только `on_site`.
+- Артефакты: `01-analysis/3-design-brief/screen-registry.md`, `01-analysis/3-design-brief/navigation.md`, `01-analysis/3-design-brief/design-brief.md`, `01-analysis/4-design/data-model.md`, `01-analysis/4-design/api-sequence.md`, `01-analysis/api/openapi.yaml`.
+- Проверка: OpenAPI YAML успешно разобран; в спецификации 9 paths и 31 schemas, все обязательные endpoints и `ErrorResponse` присутствуют.
+- Открытые вопросы: фактический deployment URL Client API, поставщики SMS/Push и окончательные тексты ошибок будут уточнены перед интеграционной реализацией.
