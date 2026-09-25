@@ -65,8 +65,6 @@ internal data class BoulderLayer(
 internal data class BouldersGeometry(
     val layers: List<BoulderLayer>,
     val holds: List<ArtworkPoint>,
-    val sun: ArtworkPoint,
-    val sunRadius: Float,
 )
 
 internal fun bouldersGeometry(seed: Int): BouldersGeometry {
@@ -104,8 +102,6 @@ internal fun bouldersGeometry(seed: Int): BouldersGeometry {
             BoulderLayer(front, baseY = 1.12f, alpha = BoulderLayerAlphas[2]),
         ),
         holds = holds,
-        sun = ArtworkPoint(0.76f, 0.20f),
-        sunRadius = 0.07f,
     )
 }
 
@@ -123,25 +119,26 @@ internal data class SpiresGeometry(
 internal fun spiresGeometry(seed: Int): SpiresGeometry {
     val jitter = { step: Int -> ((seed shr step) and 0x3) / 3f }
     val far = listOf(
-        ArtworkPoint(0f, 0.52f),
-        ArtworkPoint(0.18f, 0.42f + jitter(2) * 0.04f),
-        ArtworkPoint(0.52f, 0.48f + jitter(3) * 0.03f),
-        ArtworkPoint(0.84f, 0.44f + jitter(4) * 0.04f),
-        ArtworkPoint(1f, 0.56f),
+        ArtworkPoint(0f, 0.56f),
+        ArtworkPoint(0.20f, 0.48f),
+        ArtworkPoint(0.50f, 0.41f),
+        ArtworkPoint(0.86f, 0.41f),
+        ArtworkPoint(1f, 0.52f),
     )
     val mid = listOf(
-        ArtworkPoint(0f, 0.66f),
-        ArtworkPoint(0.30f, 0.54f + jitter(5) * 0.03f),
-        ArtworkPoint(0.78f, 0.58f + jitter(6) * 0.03f),
-        ArtworkPoint(1f, 0.70f),
+        ArtworkPoint(0f, 0.68f),
+        ArtworkPoint(0.30f, 0.56f + jitter(5) * 0.03f),
+        ArtworkPoint(0.78f, 0.60f + jitter(6) * 0.03f),
+        ArtworkPoint(1f, 0.72f),
     )
     val peakX = 0.34f + jitter(7) * 0.04f
     val peakY = 0.20f + jitter(8) * 0.03f
     val near = listOf(
-        ArtworkPoint(0f, 0.82f),
+        ArtworkPoint(0f, 0.86f),
         ArtworkPoint(peakX * 0.55f, 0.48f + jitter(9) * 0.03f),
         ArtworkPoint(peakX, peakY),
-        ArtworkPoint(0.66f, 0.44f + jitter(10) * 0.04f),
+        ArtworkPoint(0.50f, 0.70f + jitter(10) * 0.02f),
+        ArtworkPoint(0.72f, 0.72f + jitter(11) * 0.02f),
         ArtworkPoint(1f, 0.64f),
     )
     val ropeTop = ArtworkPoint(peakX + 0.012f, peakY + 0.10f)
@@ -151,9 +148,12 @@ internal fun spiresGeometry(seed: Int): SpiresGeometry {
         mid = mid,
         near = near,
         baseY = 1.12f,
-        sun = ArtworkPoint(0.72f, 0.52f),
-        sunRadius = 0.085f,
+        sun = ArtworkPoint(0.66f, 0.36f),
+        sunRadius = 0.07f,
         rope = listOf(ropeTop, ropeBottom),
         ropeDashes = floatArrayOf(0.024f, 0.018f),
     )
 }
+
+internal fun ridgeLines(geometry: SpiresGeometry): List<List<ArtworkPoint>> =
+    listOf(geometry.far, geometry.mid, geometry.near)

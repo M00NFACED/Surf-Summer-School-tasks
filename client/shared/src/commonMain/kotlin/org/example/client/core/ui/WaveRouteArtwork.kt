@@ -47,22 +47,10 @@ fun WaveRouteArtwork(
 }
 
 private fun DrawScope.drawBoulders(palette: ArtworkPalette, geometry: BouldersGeometry) {
-    drawCircle(
-        color = palette.sun.copy(alpha = 0.55f),
-        radius = size.minDimension * geometry.sunRadius,
-        center = geometry.sun.toOffset(size),
-    )
     geometry.layers.forEach { layer ->
         drawPath(
             path = smoothSilhouette(layer.humps, layer.baseY, size),
             color = palette.rock.copy(alpha = layer.alpha),
-        )
-    }
-    geometry.holds.forEach { hold ->
-        drawCircle(
-            color = palette.route,
-            radius = size.minDimension * 0.018f,
-            center = hold.toOffset(size),
         )
     }
     val arcPath = Path()
@@ -74,17 +62,24 @@ private fun DrawScope.drawBoulders(palette: ArtworkPalette, geometry: BouldersGe
         color = palette.route.copy(alpha = 0.28f),
         style = Stroke(width = size.minDimension * 0.008f, cap = StrokeCap.Round),
     )
+    geometry.holds.forEach { hold ->
+        drawCircle(
+            color = palette.route,
+            radius = size.minDimension * 0.018f,
+            center = hold.toOffset(size),
+        )
+    }
 }
 
 private fun DrawScope.drawSpires(palette: ArtworkPalette, geometry: SpiresGeometry) {
+    drawPath(
+        path = filledRidge(geometry.far, geometry.baseY, size),
+        color = palette.rock.copy(alpha = 0.28f),
+    )
     drawCircle(
         color = palette.sun,
         radius = size.minDimension * geometry.sunRadius,
         center = geometry.sun.toOffset(size),
-    )
-    drawPath(
-        path = filledRidge(geometry.far, geometry.baseY, size),
-        color = palette.rock.copy(alpha = 0.28f),
     )
     drawPath(
         path = filledRidge(geometry.mid, geometry.baseY, size),
