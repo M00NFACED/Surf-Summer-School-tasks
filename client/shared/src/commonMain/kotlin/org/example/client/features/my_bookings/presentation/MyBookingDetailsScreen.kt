@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -64,7 +63,6 @@ fun MyBookingDetailsScreen(
                 WaveSlotImage(
                     style = booking.slot.format.artworkStyle(),
                     seed = artworkSeed(booking.slot.id, booking.slot.instructor.id),
-                    modifier = Modifier.fillMaxWidth().height(190.dp),
                 )
                 BookingStatusBadge(
                     booking = booking,

@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -41,7 +40,7 @@ fun ScheduleCard(item: TrainingSlotItem, onClick: (String) -> Unit) {
         WaveSlotImage(
             style = item.format.artworkStyle(),
             seed = item.artworkSeed(),
-            modifier = Modifier.fillMaxWidth().height(168.dp).padding(8.dp),
+            modifier = Modifier.padding(8.dp),
         )
         Column(
             modifier = Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, bottom = 14.dp),

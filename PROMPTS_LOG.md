@@ -176,3 +176,12 @@
 - Трассируемость: `BR-001`…`BR-014`, `FR-001`…`FR-011`, `NFR-001`…`NFR-007`, `SCR-003`, `SCR-004`, `SCR-005`, `SCR-006`, `SCR-007`; OpenAPI не изменялся.
 - Проверка: `.\gradlew :client:shared:jvmTest` — Passed (72 теста в 25 классах, 0 падений); `.\gradlew :client:androidApp:assembleDebug` — Passed; `.\gradlew :client:shared:build` — Passed; `.\gradlew :client:desktopApp:compileKotlinDesktop` — Passed.
 - Ограничения: отсутствуют UI-тесты и contract-тесты против запущенного Client API, race-тест 409 требует внешнего backend; NFR-001 и NFR-002 измеряются на устройстве.
+
+### 2026-09-25 — Сессия 19
+
+- Запрос: доработать процедурный артворк `WaveRouteArtwork.kt` — убрать геометрические аномалии («лазерные» диагонали через небо и солнце, «шар на палочке»), переработать силуэты под два формата, зафиксировать высоту 120 dp и скругление 16 dp.
+- Исправления геометрии: маршрут-«луч», уходивший в солнце, удалён; солнце больше не пересекается никакими линиями. `MORNING_BOULDERS`: вместо одиночного шара — три перекрывающихся слоя плавных силуэтов из валунов с прозрачностью 0.15/0.35/0.6 на мягком изумрудно-бирюзовом градиенте, маршрут — короткая дуга из 5 зацепов на переднем камне. `EVENING_SPIRES`: закатный градиент и остроконечные пики сохранены, солнце опущено к горизонту (y ≈ 0.52) за хребтом, маршрут заменён на вертикальный пунктир вдоль главного пика (`PathEffect.dashPathEffect`) — без выхода в солнце и к краю экрана.
+- Пропорции: `ArtworkBlockHeight = 120.dp` и `ArtworkCornerRadius = 16.dp` заданы в компоненте, индивидуальные высоты удалены из `ScheduleCard`, `SlotDetailContent`, `MyBookingCard`, `MyBookingDetailsScreen`.
+- Seed: `artworkSeed` дополнен финализатором murmur-подобного перемешивания, чтобы соседние ID давали визуально разные силуэты; проверка на это есть в `ArtworkVariantTest`.
+- Проверка: `.\gradlew :client:shared:jvmTest` — Passed; `.\gradlew :client:androidApp:assembleDebug` — Passed; `.\gradlew :client:shared:build` — Passed; `.\gradlew :client:desktopApp:compileKotlinDesktop` — Passed.
+- Ограничения: визуальная оценка сделана по координатам геометрии и ASCII-превью контрольных точек, пиксельное сравнение с Figma по-прежнему невозможно.

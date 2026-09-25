@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -42,7 +41,7 @@ fun MyBookingCard(booking: MyBooking, onClick: (String) -> Unit) {
             WaveSlotImage(
                 style = booking.slot.format.artworkStyle(),
                 seed = artworkSeed(booking.slot.id, booking.slot.instructor.id),
-                modifier = Modifier.fillMaxWidth().height(168.dp).padding(8.dp),
+                modifier = Modifier.padding(8.dp),
             )
             BookingStatusBadge(
                 booking = booking,
