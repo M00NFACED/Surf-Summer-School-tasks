@@ -195,7 +195,7 @@
 - Проверка: `.\gradlew :client:shared:jvmTest` — Passed; `.\gradlew :client:androidApp:assembleDebug` — Passed; `.\gradlew :client:shared:build` — Passed; `.\gradlew :client:desktopApp:compileKotlinDesktop` — Passed.
 - Ограничения: эмблема иконки и артворк проверены по координатам и превью, визуальная приёмка на устройстве не проводилась.
 
-### 2026-09-25 — Сессия 21 (запрос обозначен как «Сессия 19», но 19 и 20 уже заняты предыдущими правками)
+### 2026-09-25 — Сессия 21
 
 - Запрос: реализовать последнюю недостающую фичу MVP — экран оценки инструктора `SCR-008` / `BR-009` / `FR-010`.
 - Сетевой слой: `POST /bookings/{id}/rating` с телом `RatingRequest { score }`; добавлены `RatingRequest`, методы `rateBooking` в `BookingRemoteDataSource`, `BookingRepository`, `BookingRepositoryImpl` и `KtorBookingRemoteDataSource` с ожидаемым кодом 201.
@@ -206,3 +206,12 @@
 - Документация: в `test-report.md` BR-009 и FR-010 переведены в статус «Выполнено, покрыто тестами», пробелы пересчитаны (91 тест в 27 классах), пункт `FR-011`/`BR-010` остаётся единственным нереализованным.
 - Проверка: `.\gradlew :client:shared:jvmTest` — Passed (91 тест в 27 классах); `.\gradlew :client:androidApp:assembleDebug` — Passed; `.\gradlew :client:shared:build` — Passed; `.\gradlew :client:desktopApp:compileKotlinDesktop` — Passed.
 - Ограничения: Bottom Sheet и звёзды не покрыты UI-тестами; проверка 409 «уже оценена» выполняется против внешнего backend.
+
+### 2026-09-25 — Сессия 22
+
+- Запрос: подготовить корневой `README.md` с чистой структурой, без эмодзи, и сверить описанную архитектуру с фактическим состоянием репозитория.
+- Сверка фактов: Compose Multiplatform 1.7.3 (в исходном тексте было 1.7.0), Kotlin 2.0.21, AGP 8.5.2, Gradle 8.10.2, Java 17, Ktor 2.3.12; OpenAPI 3.0.3 содержит 9 paths и 31 schema; backend реализует 10 маршрутов (9 из контракта плюс `GET /health`) на Go 1.23 с PostgreSQL 15-alpine, миграциями, seed и healthcheck; модули клиента — `shared`, `androidApp`, `desktopApp`; feature-модули — `auth`, `schedule`, `booking`, `my_bookings`, `review`, `profile`, `navigation`.
+- Исправлены фактические ошибки исходного текста: базовый адрес по умолчанию — `http://127.0.0.1:8080` (для эмулятора адрес передаётся через `-PapiBaseUrl=http://10.0.2.2:8080`, а не наоборот); зависимости слоёв описаны словами без стрелок; в дерево добавлены `1-elicitation`, `templates`, `api`, `AGENTS.md` и `IMPLEMENTATION_PLAN.md`.
+- Добавлен раздел «Известные ограничения» с честным перечнем пробелов из QA-аудита: отсутствие UI- и contract-тестов, нереализованная регистрация push-устройства, отсутствие онлайн-комментария к оценке (не входит в MVP по `SCR-008`) и непроверенная пиксельно палитра Figma.
+- Проверка: `.\gradlew :client:shared:jvmTest` — Passed; ранее в этой сессии подтверждены `:client:shared:build`, `:client:desktopApp:compileKotlinDesktop` и `:client:androidApp:assembleDebug`.
+- Уточнение: пометка о «Сессии 19» удалена из заголовка как опечатка, логика нумерации сессий сохранена.
