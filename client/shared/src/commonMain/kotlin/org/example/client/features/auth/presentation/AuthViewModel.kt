@@ -87,6 +87,16 @@ class AuthViewModel(
         }
     }
 
+    fun logout() {
+        scope.launch {
+            tokenStorage.clear()
+            mutablePhone.value = ""
+            mutableCode.value = ""
+            mutableRetryAfter.value = 0
+            mutableState.value = AuthState.Initial
+        }
+    }
+
     fun close() {
         countdownJob?.cancel()
         scope.cancel()

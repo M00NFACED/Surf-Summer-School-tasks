@@ -1,4 +1,4 @@
-package org.example.client.features.auth.data
+package org.example.client.core.network
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

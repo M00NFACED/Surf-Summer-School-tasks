@@ -69,3 +69,12 @@
 - Артефакты: `settings.gradle.kts`, `client/shared/build.gradle.kts`, `client/shared/src/commonMain/kotlin/org/example/client/core/`, `features/auth/`, `features/schedule/presentation/ScheduleShellScreen.kt`, `App.kt`, `client/shared/src/commonTest/`, `client/androidApp/src/main/AndroidManifest.xml`, `client/androidApp/src/main/res/xml/network_security_config.xml`, `IMPLEMENTATION_PLAN.md`.
 - Проверка: `:client:shared:compileKotlinJvm` и `:client:shared:jvmTest` проходят; unit-тесты телефона, пустого ввода и OTP проходят; Docker-контейнеры `backend` и `postgres` healthy; `GET /health` вернул `200`, `POST /auth/request-code` вернул `202` с `retry_after=60`; `go vet ./...` и `go test ./...` прошли.
 - Ограничения: Android и desktop Gradle-модули ещё не подключены, поэтому их build и UI/integration tests остаются pending; в плане отмечены только фактически проверенные пункты.
+
+### 2026-09-25 — Сессия 08
+
+- Запрос: реализовать Feature 2 «Расписание тренировок, фильтрация и оффлайн-кэш» для `SCR-003`, подключить экран после OTP, logout и обновить Section 6 плана.
+- Принятые решения: использовать `GET /slots` с Bearer-токеном и query `from`, `to`, `format`, `instructor_id`; период по умолчанию — ближайшие 7 дней; `InstructorSummary` использует точные поля OpenAPI-схемы `Instructor`; кэш хранит последний успешный snapshot, время сохранения и Offline-флаг; 401 завершает клиентскую сессию, 503/сетевая ошибка используют кэш; фильтры debounce 300 мс с отменой предыдущей job.
+- Трассируемость: `BR-001`, `BR-002`, `BR-003`, `BR-014`, `FR-002`, `NFR-001`, `NFR-005`, `NFR-007`, `SCR-003`, `UC-002`.
+- Артефакты: DTO и repository/data в `client/shared/src/commonMain/kotlin/org/example/client/features/schedule/data/`, domain-модели и `GetScheduleUseCase` в `features/schedule/domain/`, UI-компоненты и `ScheduleViewModel` в `features/schedule/presentation/`, `App.kt`, `ScheduleTestFixtures.kt`, schedule unit-тесты, `IMPLEMENTATION_PLAN.md`.
+- Проверка: `:client:shared:compileKotlinJvm`, `:client:shared:jvmTest` и `:client:shared:build` проходят; unit-тесты покрывают query, 7-дневный период, DTO-маппинг, 0 мест/cancelled и offline fallback; локальный smoke `OTP → Bearer → GET /slots` вернул 21 слот; `go vet ./...` и `go test ./...` прошли.
+- Ограничения: отдельные contract/UI/performance tests и Android/desktop target ещё не подключены; визуальная проверка и gate acceptance остаются pending.

@@ -7,6 +7,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.HttpStatusCode
+import org.example.client.core.network.ErrorResponse
 import org.example.client.core.storage.TokenStorage
 import org.example.client.features.auth.domain.Client
 import org.example.client.features.auth.domain.ClientSession

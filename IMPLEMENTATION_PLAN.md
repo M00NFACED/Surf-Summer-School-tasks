@@ -10,7 +10,7 @@
 | API | Client API по `01-analysis/api/openapi.yaml` |
 | Локальная инфраструктура | Go + PostgreSQL в Docker для разработки и тестов |
 | Источник экранов | `01-analysis/3-design-brief/screen-registry.md` и `01-analysis/5-mobile-app-spec/` |
-| Статус | Stage 1 Gate пройден; Stage 2 Feature 1 реализован, UI/integration tests pending |
+| Статус | Stage 1 Gate пройден; Stage 3 Feature 2 реализован, contract/UI tests pending |
 | Ограничение | Backend production остаётся внешней black-box системой |
 
 ## 2. Цели и правила выполнения
@@ -110,27 +110,27 @@
 
 ### 6.1. Структура и API
 
-- [ ] Создать `features/schedule/presentation/`, `features/schedule/domain/`, `features/schedule/data/`.
-- [ ] Создать отдельные файлы для Schedule Screen, slot card, ViewModel, UI State, UseCases и repository.
-- [ ] Создать DTO `SlotListResponse`, `TrainingSlotSummary`, `Instructor` по OpenAPI.
-- [ ] Реализовать `GET /slots` с параметрами `from`, `to`, `format`, `instructor_id`.
-- [ ] Маппить формат `novice_bouldering` как «Новичковый болдеринг», `rope_routes` как «Трассы с верёвкой».
-- [ ] Применять дефолтный период ближайших 7 дней, если API не получил период.
-- [ ] Отменять устаревший UI-request при быстрой смене фильтров.
+- [x] Создать `features/schedule/presentation/`, `features/schedule/domain/`, `features/schedule/data/`.
+- [x] Создать отдельные файлы для Schedule Screen, slot card, ViewModel, UI State, UseCases и repository.
+- [x] Создать DTO `SlotListResponse`, `TrainingSlotSummary`, `InstructorSummary` по OpenAPI.
+- [x] Реализовать `GET /slots` с параметрами `from`, `to`, `format`, `instructor_id`.
+- [x] Маппить формат `novice_bouldering` как «Новичковый болдеринг», `rope_routes` как «Трассы с верёвкой».
+- [x] Применять дефолтный период ближайших 7 дней, если API не получил период.
+- [x] Отменять устаревший UI-request при быстрой смене фильтров.
 
 ### 6.2. UX и кэш
 
-- [ ] Отображать Skeleton 3–4 карточек во время загрузки.
-- [ ] Добавить фильтры даты, формата, инструктора и сброс фильтров.
-- [ ] Показывать карточку с датой, временем, форматом, инструктором и свободными местами.
-- [ ] Показывать Empty State «Пока нет доступных тренировок» при нулевом `items`.
-- [ ] Сохранять последний успешный расписание read-only и маркировать его как неактуальное Offline.
-- [ ] Не смешивать Error и Empty; при отсутствии сети без кэша показывать Error.
-- [ ] Не показывать слоты `cancelled` как доступные к бронированию.
+- [x] Отображать Skeleton 3–4 карточек во время загрузки.
+- [x] Добавить фильтры даты, формата, инструктора и сброс фильтров.
+- [x] Показывать карточку с датой, временем, форматом, инструктором и свободными местами.
+- [x] Показывать Empty State «Пока нет доступных тренировок» при нулевом `items`.
+- [x] Сохранять последний успешный расписание read-only и маркировать его как неактуальное Offline.
+- [x] Не смешивать Error и Empty; при отсутствии сети без кэша показывать Error.
+- [x] Не показывать слоты `cancelled` как доступные к бронированию.
 
 ### 6.3. Проверки feature
 
-- [ ] Unit-тесты на построение query и фильтрацию в domain-модели.
+- [x] Unit-тесты на построение query и фильтрацию в domain-модели.
 - [ ] Contract-тесты на 200, 400, 401 и 503.
 - [ ] UI-тесты Skeleton, Success, Empty, Error и Offline.
 - [ ] Проверить измеримое открытие расписания не дольше 2 секунд на согласованном тестовом профиле.
@@ -138,6 +138,7 @@
 
 ### 6.4. Gate feature
 
+- [x] `:client:shared:build` и `:client:shared:jvmTest` проходят.
 - [ ] `UC-002` проходит по acceptance criteria.
 - [ ] `SCR-003` соответствует дизайн-брифу и OpenAPI.
 - [ ] Offline-чтение не позволяет создать бронь или изменить данные.
