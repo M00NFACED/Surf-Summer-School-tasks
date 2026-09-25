@@ -61,3 +61,11 @@
 - Артефакты: `IMPLEMENTATION_PLAN.md`, `backend/compose.yaml`, `backend/Dockerfile`, `backend/go.mod`, `backend/go.sum`, `backend/cmd/server/`, `backend/internal/`, `backend/migrations/`, `backend/seed/`, `client/androidApp/src/main/AndroidManifest.xml`, `client/androidApp/src/main/res/xml/network_security_config.xml`.
 - Проверка: `go vet ./...` и `go test ./...` прошли; `docker compose config --no-interpolate` прошёл; SQL static checks подтвердили 7 таблиц, 8/16 constraints, 5 инструкторов и 7-дневные fixtures; handler test подтвердил HTTP 202 и OTP stdout-лог.
 - Runtime: Docker Desktop Linux engine возвращает HTTP 500; контейнеры не запущены, миграции в БД и curl `/health`/`POST /auth/request-code` фактически не выполнены. Повторить после восстановления daemon.
+
+### 2026-09-25 — Сессия 07
+
+- Запрос: реализовать Feature 1 авторизации OTP для Compose Multiplatform-клиента, настроить Ktor/токен-хранилище и проверить локальный Docker backend; отметить выполненные пункты секций 4 и 5 плана.
+- Принятые решения: добавить отдельный KMP-модуль `client/shared`; использовать Compose compiler plugin Kotlin 2.0.21; оставить auth DTO в `data/`, доменную валидацию и `RequestCodeUseCase`/`VerifyCodeUseCase` без Compose/Ktor; хранить токен через `TokenStorage`; фильтровать auth-запросы из debug-логов; разрешить cleartext только для доменов из `network_security_config.xml`.
+- Артефакты: `settings.gradle.kts`, `client/shared/build.gradle.kts`, `client/shared/src/commonMain/kotlin/org/example/client/core/`, `features/auth/`, `features/schedule/presentation/ScheduleShellScreen.kt`, `App.kt`, `client/shared/src/commonTest/`, `client/androidApp/src/main/AndroidManifest.xml`, `client/androidApp/src/main/res/xml/network_security_config.xml`, `IMPLEMENTATION_PLAN.md`.
+- Проверка: `:client:shared:compileKotlinJvm` и `:client:shared:jvmTest` проходят; unit-тесты телефона, пустого ввода и OTP проходят; Docker-контейнеры `backend` и `postgres` healthy; `GET /health` вернул `200`, `POST /auth/request-code` вернул `202` с `retry_after=60`; `go vet ./...` и `go test ./...` прошли.
+- Ограничения: Android и desktop Gradle-модули ещё не подключены, поэтому их build и UI/integration tests остаются pending; в плане отмечены только фактически проверенные пункты.

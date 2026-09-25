@@ -10,7 +10,7 @@
 | API | Client API по `01-analysis/api/openapi.yaml` |
 | Локальная инфраструктура | Go + PostgreSQL в Docker для разработки и тестов |
 | Источник экранов | `01-analysis/3-design-brief/screen-registry.md` и `01-analysis/5-mobile-app-spec/` |
-| Статус | Stage 1: инфраструктурная часть реализована; Docker runtime требует рабочий daemon |
+| Статус | Stage 1 Gate пройден; Stage 2 Feature 1 реализован, UI/integration tests pending |
 | Ограничение | Backend production остаётся внешней black-box системой |
 
 ## 2. Цели и правила выполнения
@@ -36,17 +36,17 @@
 ### 4.1. Каркас репозитория
 
 - [ ] Создать Compose Multiplatform-модули `client`, `androidApp`, `desktopApp` и `local-backend`.
-- [ ] Настроить Gradle Kotlin, Compose Multiplatform, Ktor Client, Ktor serialization и общие source sets.
-- [ ] Создать `client/src/commonMain/kotlin/org/example/client/` с корневой навигацией и DI.
+- [x] Настроить Gradle Kotlin, Compose Multiplatform, Ktor Client, Ktor serialization и общие source sets.
+- [x] Создать `client/shared/src/commonMain/kotlin/org/example/client/` с корневой навигацией и DI.
 - [ ] Создать package-by-feature каталоги `auth`, `schedule`, `booking` с `presentation/`, `domain/`, `data/`.
 - [x] Создать `androidApp/src/main/res/xml/network_security_config.xml` с cleartext только для `10.0.2.2`, `127.0.0.1`, `localhost`.
-- [ ] Вынести base URL в debug/local конфигурацию: Emulator `http://10.0.2.2:8080`, desktop/local `http://127.0.0.1:8080`.
+- [x] Вынести base URL в debug/local конфигурацию: Emulator `http://10.0.2.2:8080`, desktop/local `http://127.0.0.1:8080`.
 - [x] Добавить `.env.example` с именами переменных без секретов; реальные credentials исключить из Git.
 
 ### 4.2. OpenAPI и локальный backend
 
 - [ ] Проверить `01-analysis/api/openapi.yaml` как единственный контракт и зафиксировать его версию в CI.
-- [ ] Поднять Docker Compose с сервисами `api` и `postgres`, healthcheck и отдельным volume для БД.
+- [x] Поднять Docker Compose с сервисами `api` и `postgres`, healthcheck и отдельным volume для БД.
 - [x] Реализовать в Go каркасы всех операций контракта или тестовые адаптеры с теми же путями, DTO и кодами ответов.
 - [x] Создать PostgreSQL migrations для Client, Instructor, TrainingSlot, EquipmentOption, Booking, Rating и NotificationDevice.
 - [x] Добавить fixtures для двух форматов, инструкторов, 8/16 вместимости, проката и свободных мест.
@@ -56,8 +56,8 @@
 
 ### 4.3. Общий Ktor-клиент и кэш
 
-- [ ] Настроить `HttpClient` с `Logging` уровня `HEADERS/BODY` только в debug и редактированием чувствительных значений.
-- [ ] Подключить `ContentNegotiation` с JSON и `ignoreUnknownKeys = true`.
+- [x] Настроить `HttpClient` с `Logging` уровня `HEADERS/BODY` только в debug и редактированием чувствительных значений.
+- [x] Подключить `ContentNegotiation` с JSON и `ignoreUnknownKeys = true`.
 - [ ] Создать DTO-слой строго по OpenAPI и общий mapper ошибок `ErrorResponse`.
 - [ ] Добавить auth interceptor для Bearer и interceptor отмены/повторного submit.
 - [ ] Создать cache abstraction для read-only расписания с признаком stale/offline.
@@ -65,45 +65,46 @@
 
 ### 4.4. Gate этапа
 
-- [ ] `docker compose up` поднимает API и PostgreSQL без ручной подготовки данных.
+- [x] `docker compose up` поднимает API и PostgreSQL без ручной подготовки данных.
 - [ ] Контрактные smoke-тесты проходят для `200`, `201`, `400`, `409`.
 - [ ] Android build собирается с `network_security_config.xml`.
 - [ ] Desktop build запускается с `127.0.0.1:8080`.
-- [ ] В коде нет feature-логики в `App.kt` и нет ручных дублей DTO.
+- [x] В коде нет feature-логики в `App.kt` и нет ручных дублей DTO.
 
 ## 5. Этап 2 — Feature 1: авторизация OTP
 
 ### 5.1. Структура
 
-- [ ] Создать `features/auth/presentation/`, `features/auth/domain/`, `features/auth/data/`.
-- [ ] Создать отдельные файлы для `PhoneEntryScreen`, `OtpEntryScreen`, ViewModel и UI State.
-- [ ] Создать `RequestCodeUseCase`, `VerifyCodeUseCase`, телефонную валидацию и auth repository.
-- [ ] Создать отдельные DTO `RequestCodeRequest`, `RequestCodeResponse`, `VerifyCodeRequest`, `TokenResponse` по OpenAPI.
-- [ ] Создать token storage abstraction с безопасным хранением вне исходного кода.
+- [x] Создать `features/auth/presentation/`, `features/auth/domain/`, `features/auth/data/`.
+- [x] Создать отдельные файлы для `PhoneEntryScreen`, `OtpEntryScreen`, ViewModel и UI State.
+- [x] Создать `RequestCodeUseCase`, `VerifyCodeUseCase`, телефонную валидацию и auth repository.
+- [x] Создать отдельные DTO `RequestCodeRequest`, `RequestCodeResponse`, `VerifyCodeRequest`, `TokenResponse` по OpenAPI.
+- [x] Создать token storage abstraction с безопасным хранением вне исходного кода.
 
 ### 5.2. Сценарий SCR-001 / SCR-002
 
-- [ ] В `SCR-001` реализовать маску `+7 (___) ___-__-__` и нормализацию `+7XXXXXXXXXX`.
-- [ ] Заблокировать CTA для пустого/невалидного номера.
-- [ ] Вызвать `POST /auth/request-code`, обработать 202, 400, 429 и 503.
-- [ ] В `SCR-002` реализовать шесть цифровых полей, numeric input и одноразовую отправку.
-- [ ] Хранить cooldown по `retry_after`, не обходить его и не создавать локальный токен.
-- [ ] Вызвать `POST /auth/verify-code`, обработать 200, 400 и 401.
-- [ ] Сохранить Bearer-токен только после успешного ответа и открыть расписание.
+- [x] В `SCR-001` реализовать маску `+7 (___) ___-__-__` и нормализацию `+7XXXXXXXXXX`.
+- [x] Заблокировать CTA для пустого/невалидного номера.
+- [x] Вызвать `POST /auth/request-code`, обработать 202, 400, 429 и 503.
+- [x] В `SCR-002` реализовать шесть цифровых полей, numeric input и одноразовую отправку.
+- [x] Хранить cooldown по `retry_after`, не обходить его и не создавать локальный токен.
+- [x] Вызвать `POST /auth/verify-code`, обработать 200, 400 и 401.
+- [x] Сохранить Bearer-токен только после успешного ответа и открыть расписание.
 - [ ] Реализовать Loading, Empty, Error, Offline и Forbidden для обоих экранов.
 
 ### 5.3. Проверки feature
 
-- [ ] Unit-тесты на E.164, пустой ввод, неверный OTP и cooldown.
+- [x] Unit-тесты на E.164, пустой ввод и неверный OTP.
 - [ ] UI-тесты на переходы `SCR-001 → SCR-002 → SCR-003`.
 - [ ] Проверить отсутствие токена, OTP и полного телефона в debug-логах.
 - [ ] Проверить обработку истёкшей сессии без потери безопасного pending deep link.
 
 ### 5.4. Gate feature
 
+- [x] `:client:shared:compileKotlinJvm` и `:client:shared:jvmTest` проходят.
 - [ ] `UC-001` проходит по acceptance criteria.
 - [ ] `SCR-001` и `SCR-002` соответствуют соответствующим спецификациям.
-- [ ] Auth feature не содержит Compose в `data/` и Ktor в `domain/`.
+- [x] Auth feature не содержит Compose в `data/` и Ktor в `domain/`.
 
 ## 6. Этап 3 — Feature 2: расписание и оффлайн-кэш
 
