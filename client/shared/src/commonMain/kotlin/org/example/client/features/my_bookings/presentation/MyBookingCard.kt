@@ -19,6 +19,7 @@ import org.example.client.core.theme.wave
 import org.example.client.core.ui.WaveBadge
 import org.example.client.core.ui.WaveBadgeRow
 import org.example.client.core.ui.WaveBadgeTone
+import org.example.client.core.ui.WaveOutlineButton
 import org.example.client.core.ui.WaveSlotImage
 import org.example.client.core.ui.artworkSeed
 import org.example.client.features.booking.domain.BookingStatus
@@ -28,7 +29,11 @@ import org.example.client.features.schedule.presentation.badgeTone
 import org.example.client.features.schedule.presentation.formatSlotCardDate
 
 @Composable
-fun MyBookingCard(booking: MyBooking, onClick: (String) -> Unit) {
+fun MyBookingCard(
+    booking: MyBooking,
+    onClick: (String) -> Unit,
+    onReviewClick: (() -> Unit)? = null,
+) {
     val colors = MaterialTheme.wave
     Column(
         modifier = Modifier
@@ -65,6 +70,9 @@ fun MyBookingCard(booking: MyBooking, onClick: (String) -> Unit) {
                 style = MaterialTheme.typography.bodyLarge,
                 color = colors.textPrimary,
             )
+            if (onReviewClick != null) {
+                WaveOutlineButton(text = "Оценить инструктора", onClick = onReviewClick)
+            }
         }
     }
 }

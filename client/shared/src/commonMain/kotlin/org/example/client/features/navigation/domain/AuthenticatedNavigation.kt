@@ -7,6 +7,7 @@ data class AuthenticatedNavigation(
     val slotId: String? = null,
     val bookingOpen: Boolean = false,
     val bookingId: String? = null,
+    val reviewBookingId: String? = null,
 ) {
     val isScheduleRoot: Boolean
         get() = tab == MainTab.SCHEDULE && slotId == null && !bookingOpen
@@ -14,7 +15,7 @@ data class AuthenticatedNavigation(
     val isRootScreen: Boolean
         get() = when (tab) {
             MainTab.SCHEDULE -> slotId == null
-            MainTab.MY_BOOKINGS -> bookingId == null
+            MainTab.MY_BOOKINGS -> bookingId == null && reviewBookingId == null
             MainTab.PROFILE -> true
         }
 
@@ -22,6 +23,7 @@ data class AuthenticatedNavigation(
         get() = !isScheduleRoot
 
     fun onSystemBack(): AuthenticatedNavigation = when {
+        reviewBookingId != null -> copy(reviewBookingId = null)
         tab == MainTab.SCHEDULE && bookingOpen -> copy(bookingOpen = false, slotId = null)
         tab == MainTab.SCHEDULE -> copy(slotId = null, bookingOpen = false)
         tab == MainTab.MY_BOOKINGS && bookingId != null -> copy(bookingId = null)
@@ -29,7 +31,7 @@ data class AuthenticatedNavigation(
     }
 
     fun selectTab(next: MainTab): AuthenticatedNavigation =
-        copy(tab = next, slotId = null, bookingOpen = false, bookingId = null)
+        copy(tab = next, slotId = null, bookingOpen = false, bookingId = null, reviewBookingId = null)
 
     fun openSlot(id: String): AuthenticatedNavigation = copy(slotId = id, bookingOpen = false)
 
@@ -38,4 +40,8 @@ data class AuthenticatedNavigation(
     fun closeBooking(): AuthenticatedNavigation = copy(bookingOpen = false)
 
     fun openMyBooking(id: String): AuthenticatedNavigation = copy(bookingId = id)
+
+    fun openReview(id: String): AuthenticatedNavigation = copy(reviewBookingId = id)
+
+    fun closeReview(): AuthenticatedNavigation = copy(reviewBookingId = null)
 }

@@ -23,9 +23,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.example.client.core.theme.wave
+import org.example.client.core.ui.WaveNoticeBar
 import org.example.client.core.ui.WaveOutlineButton
 import org.example.client.core.ui.WaveSegmentedToggle
 import org.example.client.core.ui.WaveTopBar
+import org.example.client.features.review.domain.isReviewable
 
 private enum class BookingsTab(val title: String) {
     UPCOMING("Предстоящие"),
@@ -37,6 +39,8 @@ fun MyBookingsScreen(
     viewModel: MyBookingsViewModel,
     onBookingClick: (String) -> Unit,
     onOpenSchedule: () -> Unit,
+    onReviewClick: (String) -> Unit = {},
+    feedback: String? = null,
 ) {
     val state by viewModel.state.collectAsState()
     var tab by rememberSaveable { mutableStateOf(BookingsTab.UPCOMING) }
@@ -57,6 +61,7 @@ fun MyBookingsScreen(
                     color = MaterialTheme.wave.textSecondary,
                 )
             }
+            feedback?.let { WaveNoticeBar(it) }
             WaveSegmentedToggle(
                 options = BookingsTab.values().toList(),
                 selected = tab,
@@ -86,7 +91,15 @@ fun MyBookingsScreen(
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     items(bookings, key = { it.id }) { booking ->
-                        MyBookingCard(booking = booking, onClick = onBookingClick)
+                        MyBookingCard(
+                            booking = booking,
+                            onClick = onBookingClick,
+                            onReviewClick = if (tab == BookingsTab.PAST && booking.isReviewable()) {
+                                { onReviewClick(booking.id) }
+                            } else {
+                                null
+                            },
+                        )
                     }
                 }
             }

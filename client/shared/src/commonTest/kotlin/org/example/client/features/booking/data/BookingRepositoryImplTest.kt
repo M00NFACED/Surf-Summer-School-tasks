@@ -4,6 +4,7 @@ import kotlinx.coroutines.runBlocking
 import org.example.client.core.storage.InMemoryTokenStorage
 import org.example.client.features.booking.domain.DuplicateBookingException
 import org.example.client.features.booking.domain.SlotFullException
+import org.example.client.features.schedule.data.InstructorSummary
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -60,4 +61,22 @@ private class FakeRemote(private val conflictCode: String = "SLOT_FULL") : Booki
 
     override suspend fun cancelBooking(token: String, bookingId: String): Result<BookingResponse> =
         Result.failure(BookingApiException(404, "BOOKING_NOT_FOUND", "Бронь не найдена"))
+
+    override suspend fun rateBooking(
+        token: String,
+        bookingId: String,
+        request: RatingRequest,
+    ): Result<RatingDto> = Result.success(
+        RatingDto(
+            id = "66666666-6666-4666-8666-666666666666",
+            bookingId = bookingId,
+            instructor = InstructorSummary(
+                id = "22222222-2222-4222-8222-222222222222",
+                fullName = "Анна Петрова",
+                isActive = true,
+            ),
+            score = request.score,
+            createdAt = "2026-09-25T10:00:00Z",
+        ),
+    )
 }

@@ -5,4 +5,5 @@ interface BookingRemoteDataSource {
     suspend fun createBooking(token: String, request: CreateBookingRequest): Result<BookingResponse>
     suspend fun getMyBookings(token: String): Result<MyBookingsResponse>
     suspend fun cancelBooking(token: String, bookingId: String): Result<BookingResponse>
+    suspend fun rateBooking(token: String, bookingId: String, request: RatingRequest): Result<RatingDto>
 }

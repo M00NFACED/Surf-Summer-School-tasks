@@ -98,7 +98,7 @@
 | BR-006 | Своё снаряжение или прокат | `EquipmentPicker` (скальники) и `EquipmentPicker` (страховочная система) раздельно, `EquipmentSelection.Own/Rental` | `BookingMapperTest`, `CreateBookingUseCaseTest` |
 | BR-007 | Окно отмены 2 часа | `CancelBookingUseCase` сверяет `cancel_deadline` с `now`, `MyBookingDetailsScreen` блокирует кнопку | `MyBookingsUseCasesTest` |
 | BR-008 | Отмена скалодромом | `SlotStatus.CANCELLED`, `BookingStatus.CANCELLED_BY_VENUE`, вывод причины в UI | `MyBookingsMapperTest` |
-| BR-009 | Оценка инструктора | DTO `RatingDto` присутствует, пользовательский поток `SCR-008` не реализован | Не покрыто |
+| BR-009 | Оценка инструктора | `features/review/*`, `POST /bookings/{id}/rating`, кнопка «Оценить инструктора» в SCR-006/SCR-007 | `SubmitReviewUseCaseTest`, `ReviewViewModelTest` |
 | BR-010 | Push-уведомления | Регистрация push-токена в клиенте не реализована | Не покрыто |
 | BR-011 | Оплата на месте | `PaymentMethod.ON_SITE` единственный вариант, `BookingMapper` жёстко пишет `on_site` | `BookingMapperTest` |
 | BR-012 | Ограниченная роль клиента | Приложение только читает и создаёт бронь, административных сценариев нет | Статический аудит |
@@ -118,7 +118,7 @@
 | FR-007 | `features/my_bookings/*`, `GET /bookings/my` | Выполнено | `MyBookingsMapperTest`, `MyBookingsUseCasesTest` |
 | FR-008 | `CancelBookingUseCase`, `CancelBookingSheet` | Выполнено | `MyBookingsUseCasesTest` |
 | FR-009 | Отображение статуса и причины отмены залом | Выполнено | `MyBookingsMapperTest` |
-| FR-010 | `POST /bookings/{id}/rating` и `SCR-008` | **Не реализовано** | Нет |
+| FR-010 | `POST /bookings/{id}/rating`, `ReviewSheet` (SCR-008), оценка 1–5 один раз для `completed` | Выполнено, покрыто тестами | `SubmitReviewUseCaseTest`, `ReviewViewModelTest`, `AuthenticatedNavigationTest` |
 | FR-011 | Регистрация push-токена, `POST /devices` | **Не реализовано** | Нет |
 
 ### 6.3 NFR
@@ -144,10 +144,11 @@
 
 ### 6.5 Статус покрытия unit-тестами
 
-Автоматизировано 72 unit-теста в 25 классах: auth и ввод номера (13), валидация, сеть и тема (6), расписание, даты и артворк (26), бронирование и «Мои записи» (13), навигация и профиль (14). Отсутствуют UI-тесты на Loading/Empty/Error/Offline/Forbidden, контрактные тесты против запущенного Client API и race-тест 409 — они требуют внешнего backend и помечены Pending.
+Автоматизировано 91 unit-тест в 27 классах: auth и ввод номера (13), валидация, сеть и тема (6), расписание, даты и артворк (26), бронирование, «Мои записи» и оценка инструктора (26), навигация и профиль (20). Отсутствуют UI-тесты на Loading/Empty/Error/Offline/Forbidden, контрактные тесты против запущенного Client API и race-тест 409 — они требуют внешнего backend и помечены Pending.
 
 ### 6.6 Обнаруженные пробелы
 
-- `FR-010` (оценка инструктора, `SCR-008`) и `FR-011`/`BR-010` (push-уведомления) не реализованы в клиенте: DTO `RatingDto` и эндпоинты OpenAPI существуют, но UI и регистрация устройства отсутствуют.
+- `FR-011`/`BR-010` (push-уведомления) не реализованы в клиенте: эндпоинт `POST /devices/push-token` и схемы OpenAPI существуют, но регистрация устройства и обработка входящих push отсутствуют.
+- Онлайн-комментарий к оценке не реализован сознательно: `SCR-008` §6 фиксирует «Онлайн-комментарии и фотографии не входят в MVP», а `RatingRequest` в OpenAPI объявлен с `additionalProperties: false` и принимает только `score`. Для комментария требуется согласованное изменение контракта и спецификации.
 - Точные цвета, шрифты и логотип не сверены пиксельно с Figma, так как файл недоступен для прямого доступа.
 

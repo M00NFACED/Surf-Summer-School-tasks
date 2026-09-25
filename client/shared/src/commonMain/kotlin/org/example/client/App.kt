@@ -32,6 +32,9 @@ import org.example.client.features.my_bookings.domain.CancelBookingUseCase
 import org.example.client.features.my_bookings.domain.GetMyBookingsUseCase
 import org.example.client.features.my_bookings.presentation.MyBookingsViewModel
 import org.example.client.features.navigation.presentation.AuthenticatedShell
+import org.example.client.features.review.data.ReviewUseCaseGateway
+import org.example.client.features.review.domain.SubmitReviewUseCase
+import org.example.client.features.review.presentation.ReviewViewModel
 import org.example.client.features.schedule.data.InMemoryScheduleCache
 import org.example.client.features.schedule.data.KtorScheduleRemoteDataSource
 import org.example.client.features.schedule.data.ScheduleRepositoryImpl
@@ -78,6 +81,9 @@ fun App(
     val myBookingsViewModel = remember(getMyBookings, cancelMyBooking) {
         MyBookingsViewModel(getMyBookings, cancelMyBooking)
     }
+    val reviewGateway = remember(bookingRepository) { ReviewUseCaseGateway(bookingRepository) }
+    val submitReview = remember(reviewGateway) { SubmitReviewUseCase(reviewGateway) }
+    val reviewViewModel = remember(submitReview) { ReviewViewModel(submitReview) }
     val appScope = rememberCoroutineScope()
 
     val authState by authViewModel.state.collectAsState()
@@ -92,6 +98,7 @@ fun App(
     DisposableEffect(scheduleViewModel) { onDispose(scheduleViewModel::close) }
     DisposableEffect(bookingViewModel) { onDispose(bookingViewModel::close) }
     DisposableEffect(myBookingsViewModel) { onDispose(myBookingsViewModel::close) }
+    DisposableEffect(reviewViewModel) { onDispose(reviewViewModel::close) }
     LaunchedEffect(scheduleState) {
         if (scheduleState is ScheduleState.Forbidden) {
             scheduleViewModel.clearCache()
@@ -116,6 +123,7 @@ fun App(
                 scheduleViewModel = scheduleViewModel,
                 bookingViewModel = bookingViewModel,
                 myBookingsViewModel = myBookingsViewModel,
+                reviewViewModel = reviewViewModel,
                 client = currentState.session.client,
                 onLogout = {
                     appScope.launch {

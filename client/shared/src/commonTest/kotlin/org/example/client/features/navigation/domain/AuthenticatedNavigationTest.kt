@@ -81,4 +81,39 @@ class AuthenticatedNavigationTest {
         assertFalse(details.isRootScreen)
         assertTrue(details.consumesSystemBack)
     }
+
+    @Test
+    fun reviewSheetHidesBottomBarAndClosesOnSystemBack() {
+        val list = AuthenticatedNavigation().selectTab(MainTab.MY_BOOKINGS)
+        val withSheet = list.openReview("booking-1")
+
+        assertFalse(withSheet.isRootScreen)
+        val afterBack = withSheet.onSystemBack()
+
+        assertEquals(MainTab.MY_BOOKINGS, afterBack.tab)
+        assertEquals(null, afterBack.reviewBookingId)
+        assertTrue(afterBack.isRootScreen)
+    }
+
+    @Test
+    fun systemBackFromReviewSheetDoesNotCloseBookingDetails() {
+        val details = AuthenticatedNavigation().selectTab(MainTab.MY_BOOKINGS).openMyBooking("booking-1")
+        val withSheet = details.openReview("booking-1")
+
+        val afterBack = withSheet.onSystemBack()
+
+        assertEquals("booking-1", afterBack.bookingId)
+        assertEquals(null, afterBack.reviewBookingId)
+    }
+
+    @Test
+    fun selectingTabClosesReviewSheet() {
+        val withSheet = AuthenticatedNavigation()
+            .selectTab(MainTab.MY_BOOKINGS)
+            .openReview("booking-1")
+
+        val result = withSheet.selectTab(MainTab.PROFILE)
+
+        assertEquals(null, result.reviewBookingId)
+    }
 }

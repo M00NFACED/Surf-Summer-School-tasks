@@ -92,6 +92,23 @@ class MyBookingsViewModel(
         scope.cancel()
     }
 
+    fun applyReview(bookingId: String, score: Int) {
+        val snapshot = mutableState.value.snapshot ?: return
+        mutableState.value = mutableState.value.copy(
+            snapshot = snapshot.copy(
+                active = snapshot.active.map { it.withRating(bookingId, score) },
+                history = snapshot.history.map { it.withRating(bookingId, score) },
+            ),
+        )
+    }
+
+    private fun MyBooking.withRating(bookingId: String, score: Int): MyBooking =
+        if (id == bookingId) {
+            copy(status = org.example.client.features.booking.domain.BookingStatus.RATED, ratingScore = score)
+        } else {
+            this
+        }
+
     private fun replaceBooking(updated: MyBooking): MyBookingsState {
         val current = mutableState.value
         val snapshot = current.snapshot

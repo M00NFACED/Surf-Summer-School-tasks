@@ -54,12 +54,28 @@ class KtorBookingRemoteDataSource(
             }
         }) { it.body() }
 
+    override suspend fun rateBooking(
+        token: String,
+        bookingId: String,
+        request: RatingRequest,
+    ): Result<RatingDto> = execute(HttpStatusCode.Created, {
+        client.post(ratingUrl(bookingId)) {
+            headers { append(HttpHeaders.Authorization, "Bearer $token") }
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+    }) { it.body() }
+
     private fun slotUrl(slotId: String): String = URLBuilder("${baseUrl.trimEnd('/')}/slots")
         .appendPathSegments(listOf(slotId), encodeSlash = true)
         .buildString()
 
     private fun bookingUrl(bookingId: String): String = URLBuilder("${baseUrl.trimEnd('/')}/bookings")
         .appendPathSegments(listOf(bookingId, "cancel"), encodeSlash = true)
+        .buildString()
+
+    private fun ratingUrl(bookingId: String): String = URLBuilder("${baseUrl.trimEnd('/')}/bookings")
+        .appendPathSegments(listOf(bookingId, "rating"), encodeSlash = true)
         .buildString()
 
     private suspend fun <T> execute(

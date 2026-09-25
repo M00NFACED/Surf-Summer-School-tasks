@@ -36,6 +36,7 @@ import org.example.client.core.ui.artworkSeed
 import org.example.client.features.booking.domain.BookingStatus
 import org.example.client.features.booking.domain.EquipmentSelection
 import org.example.client.features.my_bookings.domain.MyBooking
+import org.example.client.features.review.domain.isReviewable
 import org.example.client.features.schedule.presentation.artworkStyle
 import org.example.client.features.schedule.presentation.badgeTone
 import org.example.client.features.schedule.presentation.formatSlotCardDate
@@ -46,6 +47,7 @@ fun MyBookingDetailsScreen(
     viewModel: MyBookingsViewModel,
     booking: MyBooking,
     onBack: () -> Unit,
+    onReviewClick: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
     val colors = MaterialTheme.wave
@@ -101,6 +103,16 @@ fun MyBookingDetailsScreen(
                     text = "Отмена доступна не позднее чем за 2 часа до начала тренировки",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
+                )
+            }
+            if (booking.isReviewable()) {
+                WavePrimaryButton(text = "Оценить инструктора", onClick = onReviewClick)
+            }
+            booking.ratingScore?.let { score ->
+                Text(
+                    text = "Ваша оценка: $score из 5",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textSecondary,
                 )
             }
         }

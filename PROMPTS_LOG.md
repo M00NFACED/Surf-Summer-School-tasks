@@ -194,3 +194,15 @@
 - Контроль: `ArtworkVariantTest` проверяет прозрачности слоёв, дугу зацепов, вертикальность верёвки, её удалённость от солнца и краёв, а также расстояние от центра солнца до всех сегментов хребтов на 5 разных seed — падение теста означало бы возврат «лазерной» линии.
 - Проверка: `.\gradlew :client:shared:jvmTest` — Passed; `.\gradlew :client:androidApp:assembleDebug` — Passed; `.\gradlew :client:shared:build` — Passed; `.\gradlew :client:desktopApp:compileKotlinDesktop` — Passed.
 - Ограничения: эмблема иконки и артворк проверены по координатам и превью, визуальная приёмка на устройстве не проводилась.
+
+### 2026-09-25 — Сессия 21 (запрос обозначен как «Сессия 19», но 19 и 20 уже заняты предыдущими правками)
+
+- Запрос: реализовать последнюю недостающую фичу MVP — экран оценки инструктора `SCR-008` / `BR-009` / `FR-010`.
+- Сетевой слой: `POST /bookings/{id}/rating` с телом `RatingRequest { score }`; добавлены `RatingRequest`, методы `rateBooking` в `BookingRemoteDataSource`, `BookingRepository`, `BookingRepositoryImpl` и `KtorBookingRemoteDataSource` с ожидаемым кодом 201.
+- Новый feature-пакет `features/review/`: `ReviewRules` (проверка `completed` + отсутствие оценки + диапазон 1..5), `SubmitReviewUseCase`, `ReviewUseCaseGateway`, `ReviewViewModel`, `ReviewState`, `ReviewSheet` как Bottom Sheet по `SCR-008` (артворк-аватар инструктора, имя, контекст брони, ряд из 5 звёзд, CTA «Отправить отзыв», disabled до выбора).
+- Точки входа: кнопка «Оценить инструктора» в карточке прошедшей тренировки (`SCR-006`) и в деталях записи (`SCR-007`); шторка закрывает BottomBar, обрабатывается системным «Назад» и не закрывает детали записи; после 201 бронь получает статус `rated`, кнопка исчезает и показывается сообщение «Спасибо за отзыв!».
+- Зафиксированное расхождение: поле комментария не реализовано сознательно — `SCR-008` §6 содержит «Онлайн-комментарии и фотографии не входят в MVP», а `RatingRequest` в OpenAPI объявлен с `additionalProperties: false`. Для комментария нужно согласованное изменение контракта и спецификации.
+- Тесты: `SubmitReviewUseCaseTest` (0 и 6 звёзд, не `completed`, отменённая, повторная оценка, некорректный UUID, успешная отправка, границы диапазона, `isReviewable`), `ReviewViewModelTest` (submit без звёзд, успех, offline с сохранением выбранной оценки, блокировка повторной отправки), 4 новых теста `AuthenticatedNavigationTest` на шторку оценки.
+- Документация: в `test-report.md` BR-009 и FR-010 переведены в статус «Выполнено, покрыто тестами», пробелы пересчитаны (91 тест в 27 классах), пункт `FR-011`/`BR-010` остаётся единственным нереализованным.
+- Проверка: `.\gradlew :client:shared:jvmTest` — Passed (91 тест в 27 классах); `.\gradlew :client:androidApp:assembleDebug` — Passed; `.\gradlew :client:shared:build` — Passed; `.\gradlew :client:desktopApp:compileKotlinDesktop` — Passed.
+- Ограничения: Bottom Sheet и звёзды не покрыты UI-тестами; проверка 409 «уже оценена» выполняется против внешнего backend.

@@ -39,6 +39,10 @@ class BookingRepositoryImpl(
         remote.cancelBooking(token, bookingId)
     }
 
+    override suspend fun rateBooking(bookingId: String, score: Int): Result<RatingDto> = withToken { token ->
+        remote.rateBooking(token, bookingId, RatingRequest(score))
+    }
+
     private suspend fun <T> withToken(block: suspend (String) -> Result<T>): Result<T> {
         val token = tokenStorage.read()
         return if (token.isNullOrBlank()) {
