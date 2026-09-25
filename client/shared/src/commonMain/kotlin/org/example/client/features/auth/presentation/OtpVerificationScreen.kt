@@ -42,7 +42,7 @@ fun OtpVerificationScreen(
 ) {
     val focusManager = LocalFocusManager.current
     val validator = remember { PhoneNumberValidator() }
-    Scaffold { padding ->
+    Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
             verticalArrangement = Arrangement.Center,
@@ -57,9 +57,17 @@ fun OtpVerificationScreen(
                         onValueChange = { value ->
                             val input = value.filter(Char::isDigit).lastOrNull()?.toString().orEmpty()
                             val characters = code.padEnd(6, ' ').toCharArray()
-                            characters[index] = if (input.isEmpty()) ' ' else input.single()
+                            if (input.isEmpty() && digit.isEmpty() && index > 0) {
+                                characters[index - 1] = ' '
+                            } else {
+                                characters[index] = if (input.isEmpty()) ' ' else input.single()
+                            }
                             onCodeChange(characters.joinToString("").filterNot(Char::isWhitespace))
-                            if (input.isNotEmpty()) focusManager.moveFocus(FocusDirection.Next) else focusManager.moveFocus(FocusDirection.Previous)
+                            if (input.isEmpty()) {
+                                focusManager.moveFocus(FocusDirection.Previous)
+                            } else if (index < 5) {
+                                focusManager.moveFocus(FocusDirection.Next)
+                            }
                         },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),

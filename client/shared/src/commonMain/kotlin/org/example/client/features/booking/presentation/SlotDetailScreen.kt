@@ -37,7 +37,7 @@ fun SlotDetailScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val details by viewModel.details.collectAsState()
-    LaunchedEffect(slotId) { viewModel.loadDetails(slotId) }
+    LaunchedEffect(slotId) { viewModel.loadSlot(slotId) }
 
     Scaffold(
         topBar = {
@@ -53,8 +53,8 @@ fun SlotDetailScreen(
             when (val current = state) {
                 BookingState.Initial, BookingState.Loading -> BookingSkeleton()
                 is BookingState.DetailsLoaded -> SlotDetailsContent(current.details, onBook)
-                is BookingState.NetworkError -> DetailError(current.message) { viewModel.loadDetails(slotId) }
-                is BookingState.ValidationError -> DetailError(current.message) { viewModel.loadDetails(slotId) }
+                is BookingState.NetworkError -> DetailError(current.message) { viewModel.loadSlot(slotId) }
+                is BookingState.ValidationError -> DetailError(current.message) { viewModel.loadSlot(slotId) }
                 BookingState.Forbidden -> DetailError("Сессия истекла", onBack)
                 is BookingState.ConflictError -> details?.let { SlotDetailsContent(it, onBook) } ?: DetailError(current.message, onBack)
                 is BookingState.Submitting -> details?.let { SlotDetailsContent(it, onBook, true) } ?: BookingSkeleton()

@@ -26,6 +26,24 @@ class CreateBookingUseCaseTest {
     }
 
     @Test
+    fun acceptsBackendCanonicalSlotId() = runBlocking {
+        val gateway = FakeGateway()
+        val useCase = CreateBookingUseCase(gateway)
+        val slotId = "00000000-0000-0000-0000-000000000010"
+
+        val result = useCase(
+            slotId = " $slotId ",
+            slotStatus = SlotStatus.AVAILABLE,
+            availablePlaces = 1,
+            shoes = EquipmentSelection.Own,
+            harness = EquipmentSelection.Own,
+        )
+
+        assertTrue(result.isSuccess)
+        assertEquals(slotId, gateway.intent?.slotId)
+    }
+
+    @Test
     fun rejectsMissingOrInvalidEquipmentSelections() = runBlocking {
         val useCase = CreateBookingUseCase(FakeGateway())
 

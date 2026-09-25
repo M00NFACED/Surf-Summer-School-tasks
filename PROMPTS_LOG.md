@@ -122,3 +122,12 @@
 - Артефакты: `PhoneNumberValidator.kt`, `PhoneNumberVisualTransformation.kt`, `PhoneEntryScreen.kt`, `OtpVerificationScreen.kt`, `App.kt`, `SCR-002_Ввод_SMS_кода.md`, тесты форматтера/маски/AuthViewModel.
 - Проверка: `:client:shared:jvmTest`, `:client:shared:build`, `:client:desktopApp:compileKotlinDesktop` и `:client:androidApp:assembleDebug` проходят; запрошенная `:client:shared:desktopTest` не запускается, потому что в shared используется target `jvm()` и такой Gradle task отсутствует.
 - Ограничения: UI-проверка на устройстве/эмуляторе не выполнялась; `desktopTest` требует отдельного alias/переименования target и не менялся в рамках bugfix.
+
+### 2026-09-25 — Сессия 14
+
+- Запрос: выполнить QA и стабилизацию MVP; исправить навигацию slot/instructor IDs, persistent auth token, OTP Backspace и тёмную тему; добавить test matrix/report.
+- Принятые решения: UUID validator принимает canonical 8-4-4-4-12 hex независимо от version/variant; IDs нормализуются в presentation/domain/data, path строится через Ktor URL segments; Android использует `SharedPreferencesSettings`, desktop — `PreferencesSettings` через `SettingsTokenStorage`; startup восстанавливает token и открывает расписание; OTP Backspace очищает предыдущую ячейку; root выбирает системную dark/light MaterialTheme scheme.
+- Трассируемость: `BR-001`, `BR-003`, `BR-004`, `BR-005`, `BR-007`, `BR-013`, `FR-001`, `FR-002`, `FR-003`, `FR-004`, `FR-005`, `FR-006`, `FR-008`, `NFR-003`, `NFR-004`, `NFR-005`, `NFR-006`, `NFR-007`, `SCR-001`…`SCR-007`; OpenAPI не изменялся.
+- Артефакты: `UuidValidator.kt`, `GetScheduleUseCase.kt`, `GetSlotDetailsUseCase.kt`, `CreateBookingUseCase.kt`, `ScheduleViewModel.kt`, `BookingViewModel.kt`, `KtorBookingRemoteDataSource.kt`, `ScheduleQueryBuilder.kt`, `App.kt`, platform entry points, `OtpVerificationScreen.kt`, `ScheduleScreen.kt`, `PhoneEntryScreen.kt`, `01-analysis/6-testing/test-matrix.md`, `01-analysis/6-testing/test-report.md`, unit/storage tests.
+- Проверка: `.\gradlew :client:shared:jvmTest` — Passed; `.\gradlew :client:androidApp:assembleDebug` — Passed; `.\gradlew :client:shared:build` и `.\gradlew :client:desktopApp:compileKotlinDesktop` — Passed.
+- Ограничения: ручной запуск на физическом устройстве/эмуляторе, реальный SMS и race-тест внешнего backend остаются pending; в test-report device-level пункты явно отмечены.

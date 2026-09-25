@@ -32,7 +32,10 @@ fun PhoneEntryScreen(
     val validator = remember { PhoneNumberValidator() }
     val visualTransformation = remember { PhoneNumberVisualTransformation(validator) }
     Scaffold { padding ->
-        Surface(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Surface(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            color = MaterialTheme.colorScheme.background,
+        ) {
             Column(
                 modifier = Modifier.fillMaxSize().padding(16.dp),
                 verticalArrangement = Arrangement.Center,

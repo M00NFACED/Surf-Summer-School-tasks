@@ -79,7 +79,7 @@ fun BookingScreen(
             onDismissRequest = {},
             title = { Text("Место занято") },
             text = { Text("Место только что занято другим клиентом. Остаток обновлён.") },
-            confirmButton = { TextButton(onClick = { viewModel.loadDetails(details!!.id) }) { Text("Обновить") } },
+            confirmButton = { TextButton(onClick = { viewModel.loadSlot(details!!.id) }) { Text("Обновить") } },
             dismissButton = { TextButton(onClick = onBack) { Text("Назад") } },
         )
     }

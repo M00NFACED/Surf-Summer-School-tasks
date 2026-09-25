@@ -10,20 +10,26 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.URLBuilder
+import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
 import kotlinx.coroutines.CancellationException
 import org.example.client.core.network.ErrorResponse
+import org.example.client.core.validation.UuidValidator
 
 class KtorBookingRemoteDataSource(
     private val client: HttpClient,
     private val baseUrl: String,
 ) : BookingRemoteDataSource {
-    override suspend fun getSlotDetails(token: String, slotId: String): Result<TrainingSlotDetails> =
-        execute(HttpStatusCode.OK, {
-            client.get("${baseUrl.trimEnd('/')}/slots/$slotId") {
+    override suspend fun getSlotDetails(token: String, slotId: String): Result<TrainingSlotDetails> {
+        val normalizedSlotId = UuidValidator.normalize(slotId)
+            ?: return Result.failure(IllegalArgumentException("Некорректный идентификатор слота"))
+        return execute(HttpStatusCode.OK, {
+            client.get(slotUrl(normalizedSlotId)) {
                 headers { append(HttpHeaders.Authorization, "Bearer $token") }
             }
         }) { it.body() }
+    }
 
     override suspend fun createBooking(token: String, request: CreateBookingRequest): Result<BookingResponse> =
         execute(HttpStatusCode.Created, {
@@ -33,6 +39,10 @@ class KtorBookingRemoteDataSource(
                 setBody(request)
             }
         }) { it.body() }
+
+    private fun slotUrl(slotId: String): String = URLBuilder("${baseUrl.trimEnd('/')}/slots")
+        .appendPathSegments(listOf(slotId), encodeSlash = true)
+        .buildString()
 
     private suspend fun <T> execute(
         expectedStatus: HttpStatusCode,

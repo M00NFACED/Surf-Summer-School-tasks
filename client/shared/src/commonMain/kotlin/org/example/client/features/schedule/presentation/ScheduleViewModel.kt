@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import org.example.client.core.network.NetworkErrorMessage
+import org.example.client.core.validation.UuidValidator
 import org.example.client.features.schedule.domain.GetScheduleUseCase
 import org.example.client.features.schedule.domain.ScheduleError
 import org.example.client.features.schedule.domain.Instructor
@@ -45,9 +46,16 @@ class ScheduleViewModel(
         updateFilter(mutableFilter.value.copy(format = format))
     }
 
-    fun setInstructor(instructorId: String?) {
-        updateFilter(mutableFilter.value.copy(instructorId = instructorId))
+    fun filterByInstructor(instructorId: String?) {
+        val normalizedInstructorId = instructorId?.let(UuidValidator::normalize)
+        if (instructorId != null && normalizedInstructorId == null) {
+            mutableState.value = ScheduleState.Error("Некорректный идентификатор инструктора")
+            return
+        }
+        updateFilter(mutableFilter.value.copy(instructorId = normalizedInstructorId))
     }
+
+    fun setInstructor(instructorId: String?) = filterByInstructor(instructorId)
 
     fun setPeriod(from: Instant, to: Instant) {
         updateFilter(mutableFilter.value.copy(from = from, to = to))

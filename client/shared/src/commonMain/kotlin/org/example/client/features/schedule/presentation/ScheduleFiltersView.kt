@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.Instant
+import org.example.client.core.validation.UuidValidator
 import org.example.client.features.schedule.domain.Instructor
 import org.example.client.features.schedule.domain.ScheduleFilter
 import org.example.client.features.schedule.domain.TrainingFormat
@@ -77,7 +78,10 @@ fun ScheduleFiltersView(
             instructors.forEach { instructor ->
                 DropdownMenuItem(
                     text = { Text(instructor.fullName) },
-                    onClick = { expanded = false; onInstructorSelected(instructor.id) },
+                    onClick = {
+                        expanded = false
+                        UuidValidator.normalize(instructor.id)?.let(onInstructorSelected)
+                    },
                 )
             }
         }

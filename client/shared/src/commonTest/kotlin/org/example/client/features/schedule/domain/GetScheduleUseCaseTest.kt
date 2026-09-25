@@ -28,6 +28,25 @@ class GetScheduleUseCaseTest {
     }
 
     @Test
+    fun acceptsBackendCanonicalInstructorIdAndNormalizesIt() = runBlocking {
+        val now = Instant.parse("2026-09-25T12:00:00Z")
+        val instructorId = "00000000-0000-0000-0000-000000000001"
+        var captured: ScheduleFilter? = null
+        val useCase = GetScheduleUseCase(
+            load = { filter ->
+                captured = filter
+                Result.success(ScheduleSnapshot(now, now + 7.days, emptyList()))
+            },
+            now = { now },
+        )
+
+        val result = useCase(ScheduleFilter(instructorId = " $instructorId "))
+
+        assertTrue(result.isSuccess)
+        assertEquals(instructorId, captured?.instructorId)
+    }
+
+    @Test
     fun rejectsInvalidPeriodAndInstructorId() = runBlocking {
         val now = Instant.parse("2026-09-25T12:00:00Z")
         val useCase = GetScheduleUseCase(load = { Result.success(ScheduleSnapshot(now, now, emptyList())) }, now = { now })

@@ -30,6 +30,16 @@ class ScheduleQueryBuilderTest {
     }
 
     @Test
+    fun normalizesInstructorIdBeforeAddingQueryParameter() {
+        val instructorId = "00000000-0000-0000-0000-000000000001"
+
+        assertEquals(
+            listOf("instructor_id" to instructorId),
+            ScheduleQueryBuilder.build(ScheduleFilter(instructorId = " $instructorId ")),
+        )
+    }
+
+    @Test
     fun omitsUnsetOptionalFilters() {
         assertEquals(emptyList(), ScheduleQueryBuilder.build(ScheduleFilter()))
     }

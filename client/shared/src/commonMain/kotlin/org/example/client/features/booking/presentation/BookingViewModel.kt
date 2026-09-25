@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.example.client.core.network.NetworkErrorMessage
+import org.example.client.core.validation.UuidValidator
 import org.example.client.features.booking.domain.BookingError
 import org.example.client.features.booking.domain.BookingConfirmation
 import org.example.client.features.booking.domain.EquipmentSelection
@@ -43,10 +44,15 @@ class BookingViewModel(
         detailsJob?.cancel()
         mutableShoes.value = null
         mutableHarness.value = null
+        val normalizedSlotId = UuidValidator.normalize(slotId)
+        if (normalizedSlotId == null) {
+            mutableState.value = BookingState.ValidationError("Некорректный идентификатор слота")
+            return
+        }
         mutableState.value = BookingState.Loading
         detailsJob = scope.launch {
             try {
-                getSlotDetails(slotId)
+                getSlotDetails(normalizedSlotId)
                     .onSuccess { details ->
                         mutableDetails.value = details
                         mutableState.value = BookingState.DetailsLoaded(details)
@@ -59,6 +65,8 @@ class BookingViewModel(
             }
         }
     }
+
+    fun loadSlot(slotId: String) = loadDetails(slotId)
 
     fun selectShoes(selection: EquipmentSelection) {
         mutableShoes.value = selection

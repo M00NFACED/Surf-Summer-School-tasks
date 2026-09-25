@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.example.client.core.validation.UuidValidator
 import org.example.client.features.schedule.domain.TrainingSlotItem
 
 @Composable
@@ -22,7 +23,9 @@ fun ScheduleCard(item: TrainingSlotItem, onClick: (String) -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = item.isAvailable) { onClick(item.id) },
+            .clickable(enabled = item.isAvailable) {
+                UuidValidator.normalize(item.id)?.let(onClick)
+            },
         colors = CardDefaults.cardColors(
             containerColor = if (item.isAvailable) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
         ),

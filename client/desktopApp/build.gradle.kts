@@ -13,6 +13,7 @@ kotlin {
                 implementation(project(":client:shared"))
                 implementation(compose.desktop.currentOs)
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.9.0")
+                implementation("com.russhwolf:multiplatform-settings:1.2.0")
             }
         }
     }

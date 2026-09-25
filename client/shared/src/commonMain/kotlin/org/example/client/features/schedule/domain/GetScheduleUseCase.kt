@@ -3,6 +3,7 @@ package org.example.client.features.schedule.domain
 import kotlin.time.Duration.Companion.days
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import org.example.client.core.validation.UuidValidator
 
 class GetScheduleUseCase(
     private val load: suspend (ScheduleFilter) -> Result<ScheduleSnapshot>,
@@ -14,13 +15,10 @@ class GetScheduleUseCase(
         if (to <= from) {
             return Result.failure(IllegalArgumentException("Период должен быть положительным"))
         }
-        if (filter.instructorId != null && !uuidPattern.matches(filter.instructorId)) {
+        val instructorId = filter.instructorId?.let(UuidValidator::normalize)
+        if (filter.instructorId != null && instructorId == null) {
             return Result.failure(IllegalArgumentException("Некорректный идентификатор инструктора"))
         }
-        return load(filter.copy(from = from, to = to))
-    }
-
-    private companion object {
-        val uuidPattern = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$")
+        return load(filter.copy(from = from, to = to, instructorId = instructorId))
     }
 }

@@ -40,6 +40,7 @@ fun ScheduleScreen(
     LaunchedEffect(Unit) { viewModel.load() }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = { Text("Расписание тренировок") },
@@ -60,7 +61,7 @@ fun ScheduleScreen(
                 filter = filter,
                 instructors = instructors,
                 onFormatSelected = viewModel::setFormat,
-                onInstructorSelected = viewModel::setInstructor,
+                onInstructorSelected = viewModel::filterByInstructor,
                 onPeriodSelected = viewModel::setPeriod,
                 onReset = viewModel::resetFilters,
             )

@@ -1,6 +1,9 @@
 package org.example.client
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -13,7 +16,6 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
 import org.example.client.core.network.NetworkConfig
 import org.example.client.core.network.createHttpClient
-import org.example.client.core.storage.InMemoryTokenStorage
 import org.example.client.core.storage.TokenStorage
 import org.example.client.features.auth.data.AuthRepositoryImpl
 import org.example.client.features.auth.presentation.AuthScreen
@@ -40,7 +42,7 @@ import org.example.client.features.schedule.presentation.ScheduleViewModel
 
 @Composable
 fun App(
-    tokenStorage: TokenStorage = InMemoryTokenStorage(),
+    tokenStorage: TokenStorage,
     config: NetworkConfig = NetworkConfig(),
 ) {
     val stableConfig = remember { config }
@@ -82,7 +84,7 @@ fun App(
     val code by authViewModel.code.collectAsState()
     val retryAfter by authViewModel.retryAfter.collectAsState()
 
-    LaunchedEffect(Unit) { authViewModel.restoreSession() }
+    LaunchedEffect(authViewModel) { authViewModel.restoreSession() }
     DisposableEffect(authViewModel) { onDispose(authViewModel::close) }
     DisposableEffect(scheduleViewModel) { onDispose(scheduleViewModel::close) }
     DisposableEffect(bookingViewModel) { onDispose(bookingViewModel::close) }
@@ -102,7 +104,8 @@ fun App(
         if (bookingState is BookingState.Forbidden) authViewModel.logout()
     }
 
-    MaterialTheme {
+    val colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()
+    MaterialTheme(colorScheme = colorScheme) {
         when (val currentState = authState) {
             is AuthState.Authorized -> {
                 val slotId = selectedSlotId
