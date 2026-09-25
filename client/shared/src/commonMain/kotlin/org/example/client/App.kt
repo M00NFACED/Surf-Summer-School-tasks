@@ -19,7 +19,7 @@ import org.example.client.features.auth.data.AuthRepositoryImpl
 import org.example.client.features.auth.presentation.AuthScreen
 import org.example.client.features.auth.presentation.AuthState
 import org.example.client.features.auth.presentation.AuthViewModel
-import org.example.client.features.auth.presentation.OtpEntryScreen
+import org.example.client.features.auth.presentation.OtpVerificationScreen
 import org.example.client.features.auth.presentation.PhoneEntryScreen
 import org.example.client.features.booking.data.BookingRepositoryImpl
 import org.example.client.features.booking.data.BookingUseCaseGateway
@@ -43,24 +43,25 @@ fun App(
     tokenStorage: TokenStorage = InMemoryTokenStorage(),
     config: NetworkConfig = NetworkConfig(),
 ) {
-    val client = remember(config) { createHttpClient(config) }
-    val storage = remember(tokenStorage) { tokenStorage }
-    val authRepository = remember(client, config.baseUrl, storage) {
-        AuthRepositoryImpl(client, config.baseUrl, storage)
+    val stableConfig = remember { config }
+    val client = remember(stableConfig) { createHttpClient(stableConfig) }
+    val storage = remember { tokenStorage }
+    val authRepository = remember(client, stableConfig.baseUrl, storage) {
+        AuthRepositoryImpl(client, stableConfig.baseUrl, storage)
     }
-    val authViewModel = remember(authRepository, storage) { AuthViewModel(authRepository, storage) }
-    val scheduleRepository = remember(client, config.baseUrl, storage) {
+    val authViewModel = remember { AuthViewModel(authRepository, storage) }
+    val scheduleRepository = remember(client, stableConfig.baseUrl, storage) {
         ScheduleRepositoryImpl(
-            remote = KtorScheduleRemoteDataSource(client, config.baseUrl),
+            remote = KtorScheduleRemoteDataSource(client, stableConfig.baseUrl),
             tokenStorage = storage,
             cache = InMemoryScheduleCache(),
         )
     }
     val getSchedule = remember(scheduleRepository) { GetScheduleUseCase(scheduleRepository::getSchedule) }
     val scheduleViewModel = remember(scheduleRepository) { ScheduleViewModel(getSchedule, scheduleRepository) }
-    val bookingRepository = remember(client, config.baseUrl, storage) {
+    val bookingRepository = remember(client, stableConfig.baseUrl, storage) {
         BookingRepositoryImpl(
-            remote = KtorBookingRemoteDataSource(client, config.baseUrl),
+            remote = KtorBookingRemoteDataSource(client, stableConfig.baseUrl),
             tokenStorage = storage,
         )
     }
@@ -136,8 +137,8 @@ fun App(
                     )
                 }
             }
-            is AuthState.CodeSent -> OtpEntryScreen(
-                phone = phone,
+            is AuthState.CodeSent -> OtpVerificationScreen(
+                phone = currentState.phone,
                 code = code,
                 retryAfterSeconds = retryAfter,
                 isLoading = false,
@@ -147,12 +148,30 @@ fun App(
                 onResend = authViewModel::resendCode,
             )
             is AuthState.Loading -> if (currentState.screen == AuthScreen.OTP) {
-                OtpEntryScreen(phone, code, retryAfter, true, null, authViewModel::updateCode, authViewModel::verifyCode, authViewModel::resendCode)
+                OtpVerificationScreen(
+                    phone = phone,
+                    code = code,
+                    retryAfterSeconds = retryAfter,
+                    isLoading = true,
+                    errorMessage = null,
+                    onCodeChange = authViewModel::updateCode,
+                    onVerify = authViewModel::verifyCode,
+                    onResend = authViewModel::resendCode,
+                )
             } else {
                 PhoneEntryScreen(phone, true, null, authViewModel::updatePhone, authViewModel::requestCode)
             }
             is AuthState.Error -> if (currentState.screen == AuthScreen.OTP) {
-                OtpEntryScreen(phone, code, retryAfter, false, currentState.message, authViewModel::updateCode, authViewModel::verifyCode, authViewModel::resendCode)
+                OtpVerificationScreen(
+                    phone = phone,
+                    code = code,
+                    retryAfterSeconds = retryAfter,
+                    isLoading = false,
+                    errorMessage = currentState.message,
+                    onCodeChange = authViewModel::updateCode,
+                    onVerify = authViewModel::verifyCode,
+                    onResend = authViewModel::resendCode,
+                )
             } else {
                 PhoneEntryScreen(phone, false, currentState.message, authViewModel::updatePhone, authViewModel::requestCode)
             }

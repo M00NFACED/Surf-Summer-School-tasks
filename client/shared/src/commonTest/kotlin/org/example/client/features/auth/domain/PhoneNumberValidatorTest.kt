@@ -33,4 +33,27 @@ class PhoneNumberValidatorTest {
         assertFalse(validator.isCompleteNational("999123456"))
         assertTrue(validator.isCompleteNational("9991234567"))
     }
+
+    @Test
+    fun formatsEveryPartialLengthSafely() {
+        assertEquals("+7 (999", validator.format("7999"))
+        assertEquals("+7 (999", validator.format("8999"))
+        val expected = listOf(
+            "",
+            "+7 (9",
+            "+7 (99",
+            "+7 (999",
+            "+7 (999) 1",
+            "+7 (999) 12",
+            "+7 (999) 123",
+            "+7 (999) 123-4",
+            "+7 (999) 123-45",
+            "+7 (999) 123-45-6",
+            "+7 (999) 123-45-67",
+        )
+
+        expected.forEachIndexed { length, formatted ->
+            assertEquals(formatted, validator.format("9991234567".take(length)))
+        }
+    }
 }

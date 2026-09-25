@@ -10,36 +10,50 @@ class PhoneNumberVisualTransformation(
     private val validator: PhoneNumberValidator = PhoneNumberValidator(),
 ) : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
-        val digits = validator.nationalDigits(text.text)
+        val formatted = validator.format(text.text)
         return TransformedText(
-            text = AnnotatedString(validator.format(digits)),
-            offsetMapping = PhoneNumberOffsetMapping(text.text),
+            text = AnnotatedString(formatted),
+            offsetMapping = PhoneNumberOffsetMapping(text.text, formatted, validator),
         )
     }
 }
 
 private class PhoneNumberOffsetMapping(
     private val original: String,
+    private val formatted: String,
+    private val validator: PhoneNumberValidator,
 ) : OffsetMapping {
+    private val originalDigitEnds: List<Int> = buildList {
+        var previousCount = 0
+        original.forEachIndexed { index, _ ->
+            val count = validator.nationalDigits(original.substring(0, index + 1)).length
+            if (count > previousCount) {
+                add(index + 1)
+                previousCount = count
+            }
+        }
+    }
+
     override fun originalToTransformed(offset: Int): Int {
-        if (original.isEmpty()) return 2
-        val digitCount = original.take(offset.coerceIn(0, original.length)).count(Char::isDigit)
+        val safeOffset = offset.coerceIn(0, original.length)
+        val digitCount = validator.nationalDigits(original.take(safeOffset)).length
         return when {
+            formatted.isEmpty() -> 0
+            digitCount <= 0 -> 4
             digitCount <= 3 -> 4 + digitCount
             digitCount <= 6 -> digitCount + 6
-            else -> digitCount + 7
+            digitCount <= 8 -> digitCount + 7
+            else -> digitCount + 8
         }
     }
 
     override fun transformedToOriginal(offset: Int): Int {
-        val digitCount = when {
-            offset <= 4 -> 0
-            offset <= 7 -> (offset - 4).coerceAtMost(3)
-            offset <= 9 -> 3
-            offset <= 12 -> 3 + (offset - 9).coerceAtMost(3)
-            offset <= 15 -> 6 + (offset - 12).coerceAtMost(3)
-            else -> 8 + (offset - 15).coerceAtMost(2)
+        val safeOffset = offset.coerceIn(0, formatted.length)
+        val digitCount = if (formatted.isEmpty() || safeOffset <= 4) {
+            0
+        } else {
+            formatted.substring(4, safeOffset).count(Char::isDigit)
         }
-        return digitCount.coerceIn(0, original.length)
+        return if (digitCount == 0) 0 else originalDigitEnds.getOrNull(digitCount - 1) ?: original.length
     }
 }

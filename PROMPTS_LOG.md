@@ -113,3 +113,12 @@
 - Проверка: `:client:shared:build` проходит; `:client:shared:jvmTest` проходит; `:client:desktopApp:compileKotlinDesktop` проходит; `:client:androidApp:assembleDebug` проходит с default URL и с `-PapiBaseUrl=http://10.0.2.2:8080`; `git diff --check` проходит.
 - Ограничения: запуск UI на физическом устройстве/эмуляторе и ручная проверка `adb reverse` не выполнялись; для физического Android требуется проброс порта, для эмулятора можно передать `apiBaseUrl=http://10.0.2.2:8080`.
 - Нумерация: запись продолжает журнал как Сессия 12, поскольку Сессии 10 и 11 уже заняты desktop и Android.
+
+### 2026-09-25 — Сессия 13
+
+- Запрос: исправить `substring index out of bounds` в прогрессивном формате телефона и сброс экрана авторизации; проверить desktop tests и Android debug build.
+- Принятые решения: `format` использует безопасные `minOf`-срезы для 0–10 цифр; `OffsetMapping` клампит границы и проверяет все промежуточные длины; `config`, storage и `AuthViewModel` стабилизированы через `remember`; `CodeSent.phone` напрямую передаётся в `OtpVerificationScreen`; OTP-экран переименован из `OtpEntryScreen`.
+- Трассируемость: `BR-001`, `FR-001`, `NFR-004`, `SCR-001`, `SCR-002`; OpenAPI не изменялся.
+- Артефакты: `PhoneNumberValidator.kt`, `PhoneNumberVisualTransformation.kt`, `PhoneEntryScreen.kt`, `OtpVerificationScreen.kt`, `App.kt`, `SCR-002_Ввод_SMS_кода.md`, тесты форматтера/маски/AuthViewModel.
+- Проверка: `:client:shared:jvmTest`, `:client:shared:build`, `:client:desktopApp:compileKotlinDesktop` и `:client:androidApp:assembleDebug` проходят; запрошенная `:client:shared:desktopTest` не запускается, потому что в shared используется target `jvm()` и такой Gradle task отсутствует.
+- Ограничения: UI-проверка на устройстве/эмуляторе не выполнялась; `desktopTest` требует отдельного alias/переименования target и не менялся в рамках bugfix.

@@ -19,6 +19,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
@@ -26,9 +27,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.example.client.features.auth.domain.PhoneNumberValidator
 
 @Composable
-fun OtpEntryScreen(
+fun OtpVerificationScreen(
     phone: String,
     code: String,
     retryAfterSeconds: Int,
@@ -39,13 +41,14 @@ fun OtpEntryScreen(
     onResend: () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
+    val validator = remember { PhoneNumberValidator() }
     Scaffold { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
             verticalArrangement = Arrangement.Center,
         ) {
             Text("Введите код из SMS", style = MaterialTheme.typography.titleLarge)
-            Text(maskedPhone(phone), style = MaterialTheme.typography.bodyMedium)
+            Text("Мы отправили код на номер ${validator.format(phone)}", style = MaterialTheme.typography.bodyMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 repeat(6) { index ->
                     val digit = code.getOrNull(index)?.toString().orEmpty()
@@ -83,9 +86,4 @@ fun OtpEntryScreen(
             }
         }
     }
-}
-
-private fun maskedPhone(phone: String): String {
-    val digits = phone.filter(Char::isDigit).drop(1)
-    return "+7 ••• •••-${digits.takeLast(2).padStart(2, '•')}"
 }

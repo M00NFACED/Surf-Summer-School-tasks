@@ -17,14 +17,29 @@ class PhoneNumberValidator {
         return if (national.isEmpty()) "" else "+7$national"
     }
 
-    fun format(value: String): String {
-        val digits = nationalDigits(value)
-        return when {
-            digits.isEmpty() -> "+7"
-            digits.length <= 3 -> "+7 ($digits"
-            digits.length <= 6 -> "+7 (${digits.take(3)}) ${digits.drop(3)}"
-            digits.length <= 8 -> "+7 (${digits.take(3)}) ${digits.substring(3, 6)}-${digits.drop(6)}"
-            else -> "+7 (${digits.take(3)}) ${digits.substring(3, 6)}-${digits.substring(6, 8)}-${digits.substring(8, 10)}"
+    fun format(raw: String): String {
+        val digits = raw.filter { it.isDigit() }.let {
+            if (it.startsWith("7") || it.startsWith("8")) it.drop(1) else it
+        }.take(10)
+        if (digits.isEmpty()) return ""
+        val sb = StringBuilder("+7 (")
+        val p1 = digits.substring(0, minOf(3, digits.length))
+        sb.append(p1)
+        if (digits.length > 3) {
+            sb.append(") ")
+            val p2 = digits.substring(3, minOf(6, digits.length))
+            sb.append(p2)
         }
+        if (digits.length > 6) {
+            sb.append("-")
+            val p3 = digits.substring(6, minOf(8, digits.length))
+            sb.append(p3)
+        }
+        if (digits.length > 8) {
+            sb.append("-")
+            val p4 = digits.substring(8, minOf(10, digits.length))
+            sb.append(p4)
+        }
+        return sb.toString()
     }
 }
