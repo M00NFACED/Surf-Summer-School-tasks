@@ -95,3 +95,11 @@
 - Артефакты: `gradlew`, `gradlew.bat`, `gradle/wrapper/`, `build.gradle.kts`, `client/desktopApp/build.gradle.kts`, `client/desktopApp/src/desktopMain/kotlin/org/example/client/Main.kt`, `settings.gradle.kts`, `IMPLEMENTATION_PLAN.md`.
 - Проверка: `.\gradlew :client:desktopApp:compileKotlinDesktop` проходит; wrapper загружает Gradle 8.10.2; общий `:client:shared:build` проверен после подключения модуля.
 - Ограничения: интерактивное окно не запускалось автоматически; для просмотра используйте команду из итогового отчёта.
+
+### 2026-09-25 — Сессия 11
+
+- Запрос: настроить `:client:androidApp` для Android Studio, добавить Android target в shared и `MainActivity`.
+- Принятые решения: использовать AGP 8.5.2, Kotlin Android 2.0.21, compile/target SDK 34 и Java/Kotlin JVM target 17; shared подключает `androidTarget()` и OkHttp engine, desktop сохраняет CIO; включён `android.useAndroidX=true`.
+- Артефакты: `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`, `client/shared/build.gradle.kts`, `client/androidApp/build.gradle.kts`, `client/androidApp/src/main/kotlin/org/example/client/MainActivity.kt`, `AndroidManifest.xml`, `IMPLEMENTATION_PLAN.md`.
+- Проверка: `.\gradlew :client:androidApp:assembleDebug` проходит; `:client:shared:build` и `:client:desktopApp:compileKotlinDesktop` проходят; Android debug APK собран.
+- Ограничения: запуск на эмуляторе/устройстве не выполнялся; для Android Studio требуется локальный SDK и JBR/JDK 17.

@@ -18,4 +18,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "Surf"
 include(":client:shared")
+include(":client:androidApp")
 include(":client:desktopApp")

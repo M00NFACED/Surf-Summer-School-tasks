@@ -37,6 +37,7 @@
 
 - [ ] Создать Compose Multiplatform-модули `client`, `androidApp`, `desktopApp` и `local-backend`.
 - [x] Создать модуль `:client:desktopApp` с Compose Desktop и локальным entry point.
+- [x] Создать модуль `:client:androidApp` с Android SDK 34 и `MainActivity`.
 - [x] Настроить Gradle Kotlin, Compose Multiplatform, Ktor Client, Ktor serialization и общие source sets.
 - [x] Создать `client/shared/src/commonMain/kotlin/org/example/client/` с корневой навигацией и DI.
 - [ ] Создать package-by-feature каталоги `auth`, `schedule`, `booking` с `presentation/`, `domain/`, `data/`.
@@ -68,7 +69,7 @@
 
 - [x] `docker compose up` поднимает API и PostgreSQL без ручной подготовки данных.
 - [ ] Контрактные smoke-тесты проходят для `200`, `201`, `400`, `409`.
-- [ ] Android build собирается с `network_security_config.xml`.
+- [x] Android build собирается с `network_security_config.xml`.
 - [ ] Desktop build запускается с `127.0.0.1:8080`.
 - [x] В коде нет feature-логики в `App.kt` и нет ручных дублей DTO.
 

@@ -1,12 +1,20 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
+    id("com.android.library")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.compose")
 }
 
 kotlin {
     jvm()
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
 
     sourceSets {
         val commonMain by getting {
@@ -30,10 +38,29 @@ kotlin {
                 implementation(kotlin("test"))
             }
         }
+        val androidMain by getting {
+            dependencies {
+                implementation("io.ktor:ktor-client-okhttp:2.3.12")
+            }
+        }
         val jvmMain by getting {
             dependencies {
                 implementation("io.ktor:ktor-client-cio:2.3.12")
             }
         }
+    }
+}
+
+android {
+    namespace = "org.example.client.shared"
+    compileSdk = 34
+
+    defaultConfig {
+        minSdk = 24
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
