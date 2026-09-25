@@ -39,13 +39,17 @@ import org.example.client.features.schedule.presentation.ScheduleState
 import org.example.client.features.schedule.presentation.ScheduleViewModel
 
 @Composable
-fun App(tokenStorage: TokenStorage = InMemoryTokenStorage()) {
-    val config = remember { NetworkConfig() }
-    val client = remember { createHttpClient(config) }
+fun App(
+    tokenStorage: TokenStorage = InMemoryTokenStorage(),
+    config: NetworkConfig = NetworkConfig(),
+) {
+    val client = remember(config) { createHttpClient(config) }
     val storage = remember(tokenStorage) { tokenStorage }
-    val authRepository = remember { AuthRepositoryImpl(client, config.baseUrl, storage) }
-    val authViewModel = remember { AuthViewModel(authRepository, storage) }
-    val scheduleRepository = remember {
+    val authRepository = remember(client, config.baseUrl, storage) {
+        AuthRepositoryImpl(client, config.baseUrl, storage)
+    }
+    val authViewModel = remember(authRepository, storage) { AuthViewModel(authRepository, storage) }
+    val scheduleRepository = remember(client, config.baseUrl, storage) {
         ScheduleRepositoryImpl(
             remote = KtorScheduleRemoteDataSource(client, config.baseUrl),
             tokenStorage = storage,
@@ -54,7 +58,7 @@ fun App(tokenStorage: TokenStorage = InMemoryTokenStorage()) {
     }
     val getSchedule = remember(scheduleRepository) { GetScheduleUseCase(scheduleRepository::getSchedule) }
     val scheduleViewModel = remember(scheduleRepository) { ScheduleViewModel(getSchedule, scheduleRepository) }
-    val bookingRepository = remember {
+    val bookingRepository = remember(client, config.baseUrl, storage) {
         BookingRepositoryImpl(
             remote = KtorBookingRemoteDataSource(client, config.baseUrl),
             tokenStorage = storage,

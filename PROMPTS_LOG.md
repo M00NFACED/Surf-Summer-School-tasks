@@ -103,3 +103,13 @@
 - Артефакты: `settings.gradle.kts`, `build.gradle.kts`, `gradle.properties`, `client/shared/build.gradle.kts`, `client/androidApp/build.gradle.kts`, `client/androidApp/src/main/kotlin/org/example/client/MainActivity.kt`, `AndroidManifest.xml`, `IMPLEMENTATION_PLAN.md`.
 - Проверка: `.\gradlew :client:androidApp:assembleDebug` проходит; `:client:shared:build` и `:client:desktopApp:compileKotlinDesktop` проходят; Android debug APK собран.
 - Ограничения: запуск на эмуляторе/устройстве не выполнялся; для Android Studio требуется локальный SDK и JBR/JDK 17.
+
+### 2026-09-25 — Сессия 12
+
+- Запрос: исправить маску ввода телефона и обработать сетевой крэш `SocketException`; сделать базовый URL Android настраиваемым для `127.0.0.1` через `adb reverse` и `10.0.2.2` на эмуляторе.
+- Принятые решения: поле хранит только 10 национальных цифр, отбрасывает ведущие `7`/`8` и визуально форматируется как `+7 (XXX) XXX-XX-XX`; API получает E.164; `CancellationException` пробрасывается, остальные ошибки переводятся в состояние с сообщением `Не удалось подключиться к серверу. Проверьте соединение.`; Android debug URL задаётся свойством `apiBaseUrl` с default `127.0.0.1`, desktop явно использует localhost.
+- Трассируемость: `BR-001`, `BR-003`, `BR-004`, `BR-005`, `BR-013`, `FR-001`, `FR-002`, `FR-004`, `NFR-003`, `NFR-004`, `NFR-005`, `SCR-001`, `SCR-003`, `SCR-004`, `SCR-005`.
+- Артефакты: `PhoneNumberValidator.kt`, `PhoneEntryScreen.kt`, `PhoneNumberVisualTransformation.kt`, `NetworkConfig.kt`, `NetworkError.kt`, `AuthRepositoryImpl.kt`, `AuthViewModel.kt`, `ScheduleViewModel.kt`, `BookingViewModel.kt`, Android/desktop entry points, тесты масок, NetworkConfig и ViewModel.
+- Проверка: `:client:shared:build` проходит; `:client:shared:jvmTest` проходит; `:client:desktopApp:compileKotlinDesktop` проходит; `:client:androidApp:assembleDebug` проходит с default URL и с `-PapiBaseUrl=http://10.0.2.2:8080`; `git diff --check` проходит.
+- Ограничения: запуск UI на физическом устройстве/эмуляторе и ручная проверка `adb reverse` не выполнялись; для физического Android требуется проброс порта, для эмулятора можно передать `apiBaseUrl=http://10.0.2.2:8080`.
+- Нумерация: запись продолжает журнал как Сессия 12, поскольку Сессии 10 и 11 уже заняты desktop и Android.

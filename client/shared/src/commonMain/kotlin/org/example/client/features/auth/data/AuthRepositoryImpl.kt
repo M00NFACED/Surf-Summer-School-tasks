@@ -1,5 +1,6 @@
 package org.example.client.features.auth.data
 
+import kotlinx.coroutines.CancellationException
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.post
@@ -18,30 +19,53 @@ class AuthRepositoryImpl(
     private val tokenStorage: TokenStorage,
 ) : AuthRepository {
     override suspend fun requestCode(phone: String): Result<RequestCodeResponse> {
-        val response = client.post(endpoint("/auth/request-code")) {
-            contentType(ContentType.Application.Json)
-            setBody(RequestCodeRequest(phone))
-        }
-        return if (response.status == HttpStatusCode.Accepted) {
-            runCatching { Result.success(response.body<RequestCodeResponse>()) }.getOrElse { Result.failure(it) }
-        } else {
-            Result.failure(response.toAuthException())
+        return try {
+            val response = client.post(endpoint("/auth/request-code")) {
+                contentType(ContentType.Application.Json)
+                setBody(RequestCodeRequest(phone))
+            }
+            if (response.status == HttpStatusCode.Accepted) {
+                try {
+                    Result.success(response.body<RequestCodeResponse>())
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (error: Throwable) {
+                    Result.failure(error)
+                }
+            } else {
+                Result.failure(response.toAuthException())
+            }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Throwable) {
+            Result.failure(error)
         }
     }
 
     override suspend fun verifyCode(phone: String, code: String): Result<ClientSession> {
-        val response = client.post(endpoint("/auth/verify-code")) {
-            contentType(ContentType.Application.Json)
-            setBody(VerifyCodeRequest(phone, code))
+        return try {
+            val response = client.post(endpoint("/auth/verify-code")) {
+                contentType(ContentType.Application.Json)
+                setBody(VerifyCodeRequest(phone, code))
+            }
+            if (response.status != HttpStatusCode.OK) {
+                Result.failure(response.toAuthException())
+            } else {
+                try {
+                    val token = response.body<TokenResponse>()
+                    tokenStorage.write(token.accessToken)
+                    Result.success(ClientSession(token.accessToken, Client(token.client.id, token.client.phone)))
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (error: Throwable) {
+                    Result.failure(error)
+                }
+            }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Throwable) {
+            Result.failure(error)
         }
-        if (response.status != HttpStatusCode.OK) {
-            return Result.failure(response.toAuthException())
-        }
-        return runCatching {
-            val token = response.body<TokenResponse>()
-            tokenStorage.write(token.accessToken)
-            Result.success(ClientSession(token.accessToken, Client(token.client.id, token.client.phone)))
-        }.getOrElse { Result.failure(it) }
     }
 
     private fun endpoint(path: String): String = "${baseUrl.trimEnd('/')}$path"

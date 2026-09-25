@@ -1,5 +1,7 @@
 package org.example.client.features.auth.presentation
 
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -10,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.example.client.core.network.NetworkErrorMessage
 import org.example.client.core.storage.TokenStorage
 import org.example.client.features.auth.data.AuthApiException
 import org.example.client.features.auth.data.AuthRepository
@@ -23,8 +26,9 @@ class AuthViewModel(
     private val validator: PhoneNumberValidator = PhoneNumberValidator(),
     private val requestCodeUseCase: RequestCodeUseCase = RequestCodeUseCase(),
     private val verifyCodeUseCase: VerifyCodeUseCase = VerifyCodeUseCase(),
+    private val dispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
     private val mutableState = MutableStateFlow<AuthState>(AuthState.Initial)
     private val mutablePhone = MutableStateFlow("")
     private val mutableCode = MutableStateFlow("")
@@ -68,32 +72,53 @@ class AuthViewModel(
         val (phone, code) = validation.getOrThrow()
         scope.launch {
             mutableState.value = AuthState.Loading(AuthScreen.OTP)
-            repository.verifyCode(phone, code)
-                .onSuccess { session ->
-                    countdownJob?.cancel()
-                    mutableRetryAfter.value = 0
-                    mutableState.value = AuthState.Authorized(session)
-                }
-                .onFailure { error -> mutableState.value = AuthState.Error(error.messageOrDefault(), AuthScreen.OTP) }
+            try {
+                repository.verifyCode(phone, code)
+                    .onSuccess { session ->
+                        countdownJob?.cancel()
+                        mutableRetryAfter.value = 0
+                        mutableState.value = AuthState.Authorized(session)
+                    }
+                    .onFailure { error ->
+                        mutableState.value = AuthState.Error(error.messageOrDefault(), AuthScreen.OTP)
+                    }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: Throwable) {
+                mutableState.value = AuthState.Error(NetworkErrorMessage, AuthScreen.OTP)
+            }
         }
     }
 
     fun restoreSession() {
         scope.launch {
-            val token = tokenStorage.read()
-            if (!token.isNullOrBlank()) {
-                mutableState.value = AuthState.Authorized(org.example.client.features.auth.domain.ClientSession(token))
+            try {
+                val token = tokenStorage.read()
+                if (!token.isNullOrBlank()) {
+                    mutableState.value = AuthState.Authorized(org.example.client.features.auth.domain.ClientSession(token))
+                }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: Throwable) {
+                mutableState.value = AuthState.Initial
             }
         }
     }
 
     fun logout() {
         scope.launch {
-            tokenStorage.clear()
-            mutablePhone.value = ""
-            mutableCode.value = ""
-            mutableRetryAfter.value = 0
-            mutableState.value = AuthState.Initial
+            try {
+                tokenStorage.clear()
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: Throwable) {
+                Unit
+            } finally {
+                mutablePhone.value = ""
+                mutableCode.value = ""
+                mutableRetryAfter.value = 0
+                mutableState.value = AuthState.Initial
+            }
         }
     }
 
@@ -114,14 +139,22 @@ class AuthViewModel(
         val phone = validation.getOrThrow()
         scope.launch {
             mutableState.value = AuthState.Loading(screen)
-            repository.requestCode(phone)
-                .onSuccess { response ->
-                    val retryAfter = response.retryAfter ?: 60
-                    mutableRetryAfter.value = retryAfter
-                    mutableState.value = AuthState.CodeSent(phone, retryAfter)
-                    startCountdown(retryAfter)
-                }
-                .onFailure { error -> mutableState.value = AuthState.Error(error.messageOrDefault(), screen) }
+            try {
+                repository.requestCode(phone)
+                    .onSuccess { response ->
+                        val retryAfter = response.retryAfter ?: 60
+                        mutableRetryAfter.value = retryAfter
+                        mutableState.value = AuthState.CodeSent(phone, retryAfter)
+                        startCountdown(retryAfter)
+                    }
+                    .onFailure { error ->
+                        mutableState.value = AuthState.Error(error.messageOrDefault(), screen)
+                    }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: Throwable) {
+                mutableState.value = AuthState.Error(NetworkErrorMessage, screen)
+            }
         }
     }
 
@@ -138,5 +171,9 @@ class AuthViewModel(
         }
     }
 
-    private fun Throwable.messageOrDefault(): String = (this as? AuthApiException)?.message ?: "Не удалось выполнить действие. Попробуйте ещё раз"
+    private fun Throwable.messageOrDefault(): String = when (this) {
+        is AuthApiException -> message
+        is IllegalArgumentException -> message ?: "Проверьте введённые данные"
+        else -> NetworkErrorMessage
+    }
 }

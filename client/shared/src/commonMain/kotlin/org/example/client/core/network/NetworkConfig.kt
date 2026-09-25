@@ -7,5 +7,6 @@ data class NetworkConfig(
 
 object BaseUrl {
     const val AndroidEmulator = "http://10.0.2.2:8080"
+    const val AndroidDevice = "http://127.0.0.1:8080"
     const val LocalDesktop = "http://127.0.0.1:8080"
 }

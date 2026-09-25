@@ -30,6 +30,7 @@ fun PhoneEntryScreen(
     onSubmit: () -> Unit,
 ) {
     val validator = remember { PhoneNumberValidator() }
+    val visualTransformation = remember { PhoneNumberVisualTransformation(validator) }
     Scaffold { padding ->
         Surface(modifier = Modifier.fillMaxSize().padding(padding)) {
             Column(
@@ -40,12 +41,13 @@ fun PhoneEntryScreen(
                 Text("Войти в приложение", style = MaterialTheme.typography.titleLarge)
                 Text("Введите номер, на который придёт SMS-код", style = MaterialTheme.typography.bodyMedium)
                 OutlinedTextField(
-                    value = validator.format(phone),
-                    onValueChange = onPhoneChange,
+                    value = validator.nationalDigits(phone),
+                    onValueChange = { value -> onPhoneChange(validator.nationalDigits(value)) },
                     label = { Text("Телефон") },
                     placeholder = { Text("+7 (XXX) XXX-XX-XX") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    visualTransformation = visualTransformation,
                     modifier = Modifier.fillMaxWidth(),
                     isError = errorMessage != null,
                 )
@@ -54,7 +56,7 @@ fun PhoneEntryScreen(
                 }
                 Button(
                     onClick = onSubmit,
-                    enabled = validator.isValid(phone) && !isLoading,
+                    enabled = validator.isCompleteNational(phone) && !isLoading,
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                 ) {
                     if (isLoading) {
