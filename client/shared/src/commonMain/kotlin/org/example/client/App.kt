@@ -21,12 +21,20 @@ import org.example.client.features.auth.presentation.AuthState
 import org.example.client.features.auth.presentation.AuthViewModel
 import org.example.client.features.auth.presentation.OtpEntryScreen
 import org.example.client.features.auth.presentation.PhoneEntryScreen
+import org.example.client.features.booking.data.BookingRepositoryImpl
+import org.example.client.features.booking.data.BookingUseCaseGateway
+import org.example.client.features.booking.data.KtorBookingRemoteDataSource
+import org.example.client.features.booking.domain.CreateBookingUseCase
+import org.example.client.features.booking.domain.GetSlotDetailsUseCase
+import org.example.client.features.booking.presentation.BookingScreen
+import org.example.client.features.booking.presentation.BookingState
+import org.example.client.features.booking.presentation.BookingViewModel
+import org.example.client.features.booking.presentation.SlotDetailScreen
 import org.example.client.features.schedule.data.InMemoryScheduleCache
 import org.example.client.features.schedule.data.KtorScheduleRemoteDataSource
 import org.example.client.features.schedule.data.ScheduleRepositoryImpl
 import org.example.client.features.schedule.domain.GetScheduleUseCase
 import org.example.client.features.schedule.presentation.ScheduleScreen
-import org.example.client.features.schedule.presentation.ScheduleSlotPlaceholderScreen
 import org.example.client.features.schedule.presentation.ScheduleState
 import org.example.client.features.schedule.presentation.ScheduleViewModel
 
@@ -46,11 +54,25 @@ fun App(tokenStorage: TokenStorage = InMemoryTokenStorage()) {
     }
     val getSchedule = remember(scheduleRepository) { GetScheduleUseCase(scheduleRepository::getSchedule) }
     val scheduleViewModel = remember(scheduleRepository) { ScheduleViewModel(getSchedule, scheduleRepository) }
+    val bookingRepository = remember {
+        BookingRepositoryImpl(
+            remote = KtorBookingRemoteDataSource(client, config.baseUrl),
+            tokenStorage = storage,
+        )
+    }
+    val bookingGateway = remember(bookingRepository) { BookingUseCaseGateway(bookingRepository) }
+    val getSlotDetails = remember(bookingGateway) { GetSlotDetailsUseCase(bookingGateway) }
+    val createBooking = remember(bookingGateway) { CreateBookingUseCase(bookingGateway) }
+    val bookingViewModel = remember(getSlotDetails, createBooking) {
+        BookingViewModel(getSlotDetails, createBooking)
+    }
     val appScope = rememberCoroutineScope()
     var selectedSlotId by remember { mutableStateOf<String?>(null) }
+    var bookingOpen by remember { mutableStateOf(false) }
 
     val authState by authViewModel.state.collectAsState()
     val scheduleState by scheduleViewModel.state.collectAsState()
+    val bookingState by bookingViewModel.state.collectAsState()
     val phone by authViewModel.phone.collectAsState()
     val code by authViewModel.code.collectAsState()
     val retryAfter by authViewModel.retryAfter.collectAsState()
@@ -58,8 +80,12 @@ fun App(tokenStorage: TokenStorage = InMemoryTokenStorage()) {
     LaunchedEffect(Unit) { authViewModel.restoreSession() }
     DisposableEffect(authViewModel) { onDispose(authViewModel::close) }
     DisposableEffect(scheduleViewModel) { onDispose(scheduleViewModel::close) }
+    DisposableEffect(bookingViewModel) { onDispose(bookingViewModel::close) }
     LaunchedEffect(authState) {
-        if (authState !is AuthState.Authorized) selectedSlotId = null
+        if (authState !is AuthState.Authorized) {
+            selectedSlotId = null
+            bookingOpen = false
+        }
     }
     LaunchedEffect(scheduleState) {
         if (scheduleState is ScheduleState.Forbidden) {
@@ -67,13 +93,16 @@ fun App(tokenStorage: TokenStorage = InMemoryTokenStorage()) {
             authViewModel.logout()
         }
     }
+    LaunchedEffect(bookingState) {
+        if (bookingState is BookingState.Forbidden) authViewModel.logout()
+    }
 
     MaterialTheme {
         when (val currentState = authState) {
             is AuthState.Authorized -> {
                 val slotId = selectedSlotId
-                if (slotId == null) {
-                    ScheduleScreen(
+                when {
+                    slotId == null -> ScheduleScreen(
                         viewModel = scheduleViewModel,
                         onLogout = {
                             appScope.launch {
@@ -81,10 +110,26 @@ fun App(tokenStorage: TokenStorage = InMemoryTokenStorage()) {
                                 authViewModel.logout()
                             }
                         },
-                        onSlotClick = { selectedSlotId = it },
+                        onSlotClick = {
+                            selectedSlotId = it
+                            bookingOpen = false
+                        },
                     )
-                } else {
-                    ScheduleSlotPlaceholderScreen(slotId = slotId, onBack = { selectedSlotId = null })
+                    bookingOpen -> BookingScreen(
+                        viewModel = bookingViewModel,
+                        onBack = { bookingOpen = false },
+                        onSchedule = {
+                            bookingOpen = false
+                            selectedSlotId = null
+                            scheduleViewModel.refresh()
+                        },
+                    )
+                    else -> SlotDetailScreen(
+                        viewModel = bookingViewModel,
+                        slotId = slotId,
+                        onBack = { selectedSlotId = null },
+                        onBook = { bookingOpen = true },
+                    )
                 }
             }
             is AuthState.CodeSent -> OtpEntryScreen(

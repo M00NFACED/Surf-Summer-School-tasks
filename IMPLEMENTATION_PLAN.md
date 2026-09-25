@@ -10,7 +10,7 @@
 | API | Client API по `01-analysis/api/openapi.yaml` |
 | Локальная инфраструктура | Go + PostgreSQL в Docker для разработки и тестов |
 | Источник экранов | `01-analysis/3-design-brief/screen-registry.md` и `01-analysis/5-mobile-app-spec/` |
-| Статус | Stage 1 Gate пройден; Stage 3 Feature 2 реализован, contract/UI tests pending |
+| Статус | Stage 1 Gate пройден; Stage 4 Feature 3 реализован, contract/UI tests pending |
 | Ограничение | Backend production остаётся внешней black-box системой |
 
 ## 2. Цели и правила выполнения
@@ -147,48 +147,48 @@
 
 ### 7.1. Структура и API
 
-- [ ] Создать `features/booking/presentation/`, `features/booking/domain/`, `features/booking/data/`.
-- [ ] Создать отдельные файлы для SlotDetail Screen, Booking Screen, ViewModel, UI State, UseCases и repository.
-- [ ] Создать DTO `TrainingSlot`, `EquipmentOption`, `CreateBookingRequest`, `Booking` по OpenAPI.
-- [ ] Реализовать `GET /slots/{id}` с полями времени, формата, инструктора, адреса, мест и rental options.
-- [ ] Блокировать CTA в `SCR-004` при `available_places = 0` или `status = cancelled`.
-- [ ] В `SCR-005` показать одну бронь на клиента без селектора количества людей.
-- [ ] Реализовать отдельный выбор скальников `own/rental` и системы `own/rental`.
-- [ ] Передавать `payment_method = on_site`; не добавлять платёжный endpoint или токен.
+- [x] Создать `features/booking/presentation/`, `features/booking/domain/`, `features/booking/data/`.
+- [x] Создать отдельные файлы для SlotDetail Screen, Booking Screen, ViewModel, UI State, UseCases и repository.
+- [x] Создать DTO `TrainingSlotDetails`, `EquipmentOption`, `CreateBookingRequest`, `BookingResponse` по OpenAPI.
+- [x] Реализовать `GET /slots/{id}` с полями времени, формата, инструктора, адреса, мест и rental options.
+- [x] Блокировать CTA в `SCR-004` при `available_places = 0` или `status = cancelled`.
+- [x] В `SCR-005` показать одну бронь на клиента без селектора количества людей.
+- [x] Реализовать отдельный выбор скальников `own/rental` и системы `own/rental`.
+- [x] Передавать `payment_method = on_site`; не добавлять платёжный endpoint или токен.
 
 ### 7.2. Конкуренция и ошибки
 
-- [ ] Проверять доступность rental option и `available_places` до отправки.
-- [ ] Отправлять `POST /bookings` один раз и блокировать повторный submit.
-- [ ] Обрабатывать HTTP 201 как единственное подтверждение брони.
-- [ ] Обрабатывать HTTP 400 как исправимый запрос без создания локальной брони.
-- [ ] Обрабатывать HTTP 401 как истёкшую авторизацию.
-- [ ] Обрабатывать HTTP 409 как конкуренцию: обновить слот, показать сообщение и не создавать фантомную бронь.
+- [x] Проверять доступность rental option и `available_places` до отправки.
+- [x] Отправлять `POST /bookings` один раз и блокировать повторный submit.
+- [x] Обрабатывать HTTP 201 как единственное подтверждение брони.
+- [x] Обрабатывать HTTP 400 как исправимый запрос без создания локальной брони.
+- [x] Обрабатывать HTTP 401 как истёкшую авторизацию.
+- [x] Обрабатывать HTTP 409 как конкуренцию: обновить слот, показать сообщение и не создавать фантомную бронь.
 - [ ] При неоднозначном сетевом ответе сначала сверять `GET /bookings/my`, затем разрешать повтор.
-- [ ] При Offline блокировать submit и не создавать `Pending`/`confirmed` локально.
+- [x] При Offline блокировать submit и не создавать `Pending`/`confirmed` локально.
 
 ### 7.3. Проверки feature
 
-- [ ] Unit-тесты на 1 booking = 1 client, `own/rental` и недоступный rental.
+- [x] Unit-тесты на 1 booking = 1 client, `own/rental` и недоступный rental.
 - [ ] Contract-тесты на 201, 400, 401 и 409.
 - [ ] Интеграционный race-тест двух запросов на последнее место.
 - [ ] UI-тесты на 201 success, 409 conflict, Offline и 0 мест.
-- [ ] Проверить, что сообщение «Оплата на месте» отображается до и после успеха.
-- [ ] Проверить, что после 409 карточка не появляется как подтверждённая в локальном состоянии.
+- [x] Проверить, что сообщение «Оплата на месте» отображается до и после успеха.
+- [x] Проверить, что после 409 карточка не появляется как подтверждённая в локальном состоянии.
 
 ### 7.4. Gate feature
 
 - [ ] `UC-003` и `UC-004` проходят по acceptance criteria.
 - [ ] `SCR-004` и `SCR-005` соответствуют спецификациям.
-- [ ] В production-коде нет зависимости от локального backend implementation details.
+- [x] В production-коде нет зависимости от локального backend implementation details.
 
 ## 8. Общий порядок выполнения
 
 - [ ] Сначала реализовать Stage 1 и получить рабочий contract test harness.
-- [ ] Затем выполнять Stage 2 → Stage 3 → Stage 4, не объединяя feature-батчи в один commit.
-- [ ] После каждого этапа обновлять traceability и прогонять общий quality gate.
-- [ ] Не добавлять `SCR-006…SCR-008` в первые три feature-батча без отдельного решения о следующем инкременте; их API-контракт уже зафиксирован.
-- [ ] При расхождении API и UI остановить реализацию и исправить канонический источник, а не маскировать расхождение DTO.
+- [x] Затем выполнять Stage 2 → Stage 3 → Stage 4, не объединяя feature-батчи в один commit.
+- [x] После каждого этапа обновлять traceability и прогонять общий quality gate.
+- [x] Не добавлять `SCR-006…SCR-008` в первые три feature-батча без отдельного решения о следующем инкременте; их API-контракт уже зафиксирован.
+- [x] При расхождении API и UI остановить реализацию и исправить канонический источник, а не маскировать расхождение DTO.
 
 ## 9. Определение готовности MVP-батча
 

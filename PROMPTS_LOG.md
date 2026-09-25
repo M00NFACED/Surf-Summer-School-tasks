@@ -78,3 +78,12 @@
 - Артефакты: DTO и repository/data в `client/shared/src/commonMain/kotlin/org/example/client/features/schedule/data/`, domain-модели и `GetScheduleUseCase` в `features/schedule/domain/`, UI-компоненты и `ScheduleViewModel` в `features/schedule/presentation/`, `App.kt`, `ScheduleTestFixtures.kt`, schedule unit-тесты, `IMPLEMENTATION_PLAN.md`.
 - Проверка: `:client:shared:compileKotlinJvm`, `:client:shared:jvmTest` и `:client:shared:build` проходят; unit-тесты покрывают query, 7-дневный период, DTO-маппинг, 0 мест/cancelled и offline fallback; локальный smoke `OTP → Bearer → GET /slots` вернул 21 слот; `go vet ./...` и `go test ./...` прошли.
 - Ограничения: отдельные contract/UI/performance tests и Android/desktop target ещё не подключены; визуальная проверка и gate acceptance остаются pending.
+
+### 2026-09-25 — Сессия 09
+
+- Запрос: реализовать Feature 3 «Детали слота, оформление брони с прокатом и обработка 409 Conflict» для `SCR-004`/`SCR-005`, подключить сквозную навигацию и выполнить Docker smoke.
+- Принятые решения: `GET /slots/{id}` и `POST /bookings` используют Bearer-токен; `CreateBookingRequest` не содержит количества людей или `client_id`; для скальников и системы валидируются отдельные `own/rental` selections и доступные option IDs; `payment_method` фиксирован как `on_site`; HTTP 201 создаёт только подтверждение, HTTP 409 преобразуется в `SlotFullException`, обновляет детали и не создаёт локальную бронь; повторный submit блокируется.
+- Трассируемость: `BR-004`, `BR-005`, `BR-006`, `BR-011`, `BR-013`, `BR-014`, `FR-003`, `FR-004`, `FR-005`, `FR-006`, `NFR-002`, `NFR-003`, `NFR-005`, `NFR-006`, `SCR-004`, `SCR-005`, `UC-002`, `UC-003`.
+- Артефакты: booking DTO/data/repository/mapper в `features/booking/data/`, domain models/use cases в `features/booking/domain/`, `SlotDetailScreen`, `BookingScreen`, `EquipmentPicker`, `BookingViewModel` и state в `features/booking/presentation/`, navigation в `App.kt`, booking unit-тесты, `IMPLEMENTATION_PLAN.md`.
+- Проверка: `:client:shared:jvmTest` и `:client:shared:build` проходят; unit-тесты проверяют `on_site`, отсутствие participant quantity, обязательное снаряжение и rental availability; Docker smoke `OTP → GET /slots (200) → GET /slots/{id} (200) → POST /bookings (201)` вернул `confirmed` и `payment_method=on_site`; `go vet ./...` и `go test ./...` прошли.
+- Ограничения: отдельные contract/UI/race/performance tests и Android/desktop target остаются pending; `GET /bookings/my` для неоднозначного сетевого ответа ещё не реализован.
