@@ -1,29 +1,44 @@
 package org.example.client.features.my_bookings.presentation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.Clock
+import org.example.client.core.theme.wave
+import org.example.client.core.ui.WaveBadge
+import org.example.client.core.ui.WaveBadgeRow
+import org.example.client.core.ui.WaveCardColumn
+import org.example.client.core.ui.WavePrimaryButton
+import org.example.client.core.ui.WaveSlotImage
+import org.example.client.core.ui.WaveTopBar
 import org.example.client.features.booking.domain.BookingStatus
 import org.example.client.features.booking.domain.EquipmentSelection
-import org.example.client.features.booking.presentation.formatBookingDateTime
 import org.example.client.features.my_bookings.domain.MyBooking
+import org.example.client.features.schedule.presentation.badgeTone
+import org.example.client.features.schedule.presentation.formatSlotCardDate
+import org.example.client.features.schedule.presentation.formatSlotTimeRange
 
 @Composable
 fun MyBookingDetailsScreen(
@@ -32,67 +47,98 @@ fun MyBookingDetailsScreen(
     onBack: () -> Unit,
 ) {
     val state by viewModel.state.collectAsState()
-    var showConfirmation by remember { mutableStateOf(false) }
-    val canCancel = booking.status == BookingStatus.CONFIRMED && Clock.System.now() <= booking.cancelDeadline
+    val colors = MaterialTheme.wave
+    val now = remember { Clock.System.now() }
+    val canCancel = booking.status == BookingStatus.CONFIRMED && now <= booking.cancelDeadline
+    var sheetVisible by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        TextButton(onClick = onBack) { Text("Назад") }
-        Text("Детали записи", style = MaterialTheme.typography.headlineSmall)
-        Text(formatBookingDateTime(booking.slot.startsAt), style = MaterialTheme.typography.titleMedium)
-        Text("${formatBookingDateTime(booking.slot.startsAt)} — ${formatBookingDateTime(booking.slot.endsAt)}")
-        Text(booking.slot.format.displayName)
-        Text("Инструктор: ${booking.slot.instructor.fullName}")
-        Text("Адрес: ${booking.slot.address}")
-        Text("Статус: ${booking.status.label()}")
-        booking.cancellationReason?.let { Text("Причина: $it", color = MaterialTheme.colorScheme.error) }
-        Text("Скальники: ${booking.equipment.shoes.label()}")
-        Text("Страховочная система: ${booking.equipment.harness.label()}")
-        Text("Оплата на месте")
-        if (state.cancellationError != null) {
-            Text(state.cancellationError!!, color = MaterialTheme.colorScheme.error)
-        }
-        if (canCancel) {
-            Button(
-                onClick = { showConfirmation = true },
-                enabled = !state.isCancelling,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(if (state.isCancelling) "Отменяем…" else "Отменить запись")
+    Column(modifier = Modifier.fillMaxSize()) {
+        WaveTopBar(title = "Детали записи", onBack = onBack)
+        Column(
+            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Box {
+                WaveSlotImage(modifier = Modifier.fillMaxWidth().height(190.dp))
+                BookingStatusBadge(
+                    booking = booking,
+                    modifier = Modifier.align(Alignment.TopStart).padding(12.dp),
+                )
             }
-        } else if (booking.status == BookingStatus.CONFIRMED) {
-            Text("Отмена доступна не позднее чем за 2 часа до начала тренировки", color = MaterialTheme.colorScheme.error)
+            WaveBadgeRow {
+                WaveBadge(booking.slot.format.displayName, booking.slot.format.badgeTone())
+            }
+            Text(
+                text = formatSlotCardDate(booking.slot.startsAt),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = colors.textPrimary,
+            )
+            Text(
+                text = formatSlotTimeRange(booking.slot.startsAt, booking.slot.endsAt),
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.textSecondary,
+            )
+            Text("Инструктор: ${booking.slot.instructor.fullName}", style = MaterialTheme.typography.bodyLarge, color = colors.textPrimary)
+            Text("Адрес: ${booking.slot.address}", style = MaterialTheme.typography.bodyMedium, color = colors.textSecondary)
+            DetailsCard(booking)
+            Text(
+                text = "Оплата на месте: наличные или перевод",
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textSecondary,
+            )
+            when {
+                canCancel -> WavePrimaryButton(
+                    text = "Отменить",
+                    onClick = { sheetVisible = true },
+                    loading = state.isCancelling,
+                )
+                booking.status == BookingStatus.CONFIRMED -> Text(
+                    text = "Отмена доступна не позднее чем за 2 часа до начала тренировки",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
         }
-        OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Вернуться к списку") }
     }
 
-    if (showConfirmation) {
-        AlertDialog(
-            onDismissRequest = { if (!state.isCancelling) showConfirmation = false },
-            title = { Text("Отменить запись?") },
-            text = { Text("Отменить бронь на ${formatBookingDateTime(booking.slot.startsAt)}?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showConfirmation = false
-                        viewModel.cancel(booking)
-                    },
-                    enabled = !state.isCancelling,
-                ) { Text("Отменить") }
+    if (sheetVisible) {
+        CancelBookingSheet(
+            isCancelling = state.isCancelling,
+            cancellationError = state.cancellationError,
+            onConfirm = {
+                viewModel.cancel(booking)
+                sheetVisible = false
             },
-            dismissButton = { TextButton(onClick = { showConfirmation = false }) { Text("Оставить") } },
+            onDismiss = { sheetVisible = false },
         )
     }
 }
 
-private fun BookingStatus.label(): String = when (this) {
-    BookingStatus.CONFIRMED -> "Подтверждена"
-    BookingStatus.CANCELLED_BY_CLIENT -> "Отменена клиентом"
-    BookingStatus.CANCELLED_BY_VENUE -> "Отменена скалодромом"
-    BookingStatus.COMPLETED -> "Завершена"
-    BookingStatus.RATED -> "Оценена"
+@Composable
+private fun DetailsCard(booking: MyBooking) {
+    val colors = MaterialTheme.wave
+    WaveCardColumn {
+        DetailsRow("Скальники", booking.equipment.shoes.label())
+        DetailsRow("Страховочная система", booking.equipment.harness.label())
+        DetailsRow("Оплата", "На месте")
+        booking.cancellationReason?.let { DetailsRow("Причина отмены", it) }
+    }
+}
+
+@Composable
+private fun DetailsRow(label: String, value: String) {
+    val colors = MaterialTheme.wave
+    Row(
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(colors.cardInner).padding(12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = colors.textSecondary)
+        Text(value, style = MaterialTheme.typography.bodyMedium, color = colors.textPrimary)
+    }
 }
 
 private fun EquipmentSelection.label(): String = when (this) {
-    EquipmentSelection.Own -> "Свои"
+    EquipmentSelection.Own -> "Своё"
     is EquipmentSelection.Rental -> "Прокат"
 }

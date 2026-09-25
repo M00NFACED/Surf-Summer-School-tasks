@@ -20,5 +20,12 @@ class GetScheduleUseCase(
             return Result.failure(IllegalArgumentException("Некорректный идентификатор инструктора"))
         }
         return load(filter.copy(from = from, to = to, instructorId = instructorId))
+            .map { snapshot ->
+                if (filter.onlyAvailable) {
+                    snapshot.copy(items = snapshot.items.filter { it.availablePlaces > 0 })
+                } else {
+                    snapshot
+                }
+            }
     }
 }

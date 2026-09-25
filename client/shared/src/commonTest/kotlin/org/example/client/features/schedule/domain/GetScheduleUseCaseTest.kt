@@ -6,6 +6,7 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.days
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Instant
+import org.example.client.features.booking.domain.testSlotItem
 
 class GetScheduleUseCaseTest {
     @Test
@@ -64,6 +65,31 @@ class GetScheduleUseCaseTest {
         assertTrue(result.isSuccess)
         assertEquals(upperBound.minus(7.days), captured?.from)
         assertEquals(upperBound, captured?.to)
+    }
+
+    @Test
+    fun keepsOnlyAvailableSlotsWhenClientFilterEnabled() = runBlocking {
+        val now = Instant.parse("2026-09-25T12:00:00Z")
+        val useCase = GetScheduleUseCase(
+            load = {
+                Result.success(
+                    ScheduleSnapshot(
+                        from = now,
+                        to = now + 7.days,
+                        items = listOf(
+                            testSlotItem(id = "11111111-1111-4111-8111-111111111111", availablePlaces = 2),
+                            testSlotItem(id = "33333333-3333-4333-8333-333333333333", availablePlaces = 0),
+                        ),
+                    ),
+                )
+            },
+            now = { now },
+        )
+
+        val result = useCase(ScheduleFilter(onlyAvailable = true))
+
+        assertTrue(result.isSuccess)
+        assertEquals(listOf("11111111-1111-4111-8111-111111111111"), result.getOrThrow().items.map { it.id })
     }
 
     @Test

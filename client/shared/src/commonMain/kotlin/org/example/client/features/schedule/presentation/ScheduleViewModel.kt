@@ -61,6 +61,10 @@ class ScheduleViewModel(
         updateFilter(mutableFilter.value.copy(from = from, to = to))
     }
 
+    fun applyFilter(filter: ScheduleFilter) {
+        updateFilter(filter)
+    }
+
     fun resetFilters() {
         updateFilter(ScheduleFilter())
     }

@@ -6,8 +6,12 @@ import org.example.client.features.schedule.domain.SlotStatus
 import org.example.client.features.schedule.domain.TrainingFormat
 import org.example.client.features.schedule.domain.TrainingSlotItem
 
-fun testSlotItem(availablePlaces: Int = 3, status: SlotStatus = SlotStatus.AVAILABLE) = TrainingSlotItem(
-    id = "11111111-1111-4111-8111-111111111111",
+fun testSlotItem(
+    availablePlaces: Int = 3,
+    status: SlotStatus = SlotStatus.AVAILABLE,
+    id: String = "11111111-1111-4111-8111-111111111111",
+) = TrainingSlotItem(
+    id = id,
     startsAt = Instant.parse("2026-09-25T10:00:00Z"),
     endsAt = Instant.parse("2026-09-25T12:00:00Z"),
     format = TrainingFormat.NOVICE_BOULDERING,

@@ -124,6 +124,7 @@ fun App(
                 onCodeChange = authViewModel::updateCode,
                 onVerify = authViewModel::verifyCode,
                 onResend = authViewModel::resendCode,
+                onBack = authViewModel::backToPhone,
             )
             is AuthState.Loading -> if (currentState.screen == AuthScreen.OTP) {
                 OtpVerificationScreen(
@@ -135,6 +136,7 @@ fun App(
                     onCodeChange = authViewModel::updateCode,
                     onVerify = authViewModel::verifyCode,
                     onResend = authViewModel::resendCode,
+                    onBack = authViewModel::backToPhone,
                 )
             } else {
                 PhoneEntryScreen(phone, true, null, authViewModel::updatePhone, authViewModel::requestCode)
@@ -149,6 +151,7 @@ fun App(
                     onCodeChange = authViewModel::updateCode,
                     onVerify = authViewModel::verifyCode,
                     onResend = authViewModel::resendCode,
+                    onBack = authViewModel::backToPhone,
                 )
             } else {
                 PhoneEntryScreen(phone, false, currentState.message, authViewModel::updatePhone, authViewModel::requestCode)

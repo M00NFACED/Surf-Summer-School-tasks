@@ -5,142 +5,142 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import org.example.client.features.booking.domain.BookingConfirmation
-import org.example.client.features.booking.domain.EquipmentSelection
+import org.example.client.core.theme.wave
+import org.example.client.core.ui.WavePrimaryButton
+import org.example.client.core.ui.WaveTopBar
 import org.example.client.features.booking.domain.EquipmentType
-import org.example.client.features.booking.domain.SlotDetailsItem
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookingScreen(
     viewModel: BookingViewModel,
     onBack: () -> Unit,
-    onSchedule: () -> Unit,
     onMyBookings: () -> Unit,
 ) {
     val state by viewModel.state.collectAsState()
     val details by viewModel.details.collectAsState()
-    val shoes by viewModel.shoes.collectAsState()
-    val harness by viewModel.harness.collectAsState()
-    val isSubmitting = state is BookingState.Submitting
+    val submitting = state is BookingState.Submitting
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Оформление брони") },
-                navigationIcon = { TextButton(onClick = onBack) { Text("Назад") } },
-            )
-        },
-    ) { padding ->
+    if (state is BookingState.Success) {
+        BookingSuccessView(
+            onMyBookings = onMyBookings,
+            onDone = onBack,
+        )
+        return
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        WaveTopBar(title = "Оформление записи", onBack = onBack)
         Column(
-            modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             when (val current = state) {
-                is BookingState.Success -> BookingSuccess(current.confirmation, onSchedule)
-                BookingState.Initial, BookingState.Loading -> BookingSkeleton()
-                BookingState.Forbidden -> Text("Сессия истекла. Войдите снова")
+                is BookingState.DetailsLoaded -> BookingFormBody(current.details, viewModel, submitting, blocked = false, errorText = null)
+                is BookingState.Submitting -> details?.let { BookingFormBody(it, viewModel, submitting, blocked = true, errorText = null) }
                 is BookingState.NetworkError -> {
-                    Text(current.message, color = MaterialTheme.colorScheme.error)
-                    details?.let { BookingForm(it, shoes, harness, isSubmitting, true, viewModel) }
+                    ErrorText(current.message)
+                    details?.let { BookingFormBody(it, viewModel, submitting, blocked = true, errorText = current.message) }
                 }
                 is BookingState.ValidationError -> {
-                    Text(current.message, color = MaterialTheme.colorScheme.error)
-                    details?.let { BookingForm(it, shoes, harness, isSubmitting, false, viewModel) }
+                    ErrorText(current.message)
+                    details?.let { BookingFormBody(it, viewModel, submitting, blocked = false, errorText = current.message) }
                 }
-                is BookingState.DetailsLoaded -> BookingForm(current.details, shoes, harness, isSubmitting, false, viewModel)
                 is BookingState.ConflictError -> {
-                    Text(current.message, color = MaterialTheme.colorScheme.error)
-                    details?.let { BookingForm(it, shoes, harness, isSubmitting, false, viewModel) }
+                    ErrorText(current.message)
+                    details?.let { BookingFormBody(it, viewModel, submitting, blocked = false, errorText = null) }
                 }
-                is BookingState.DuplicateBooking -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(current.message, color = MaterialTheme.colorScheme.error)
-                    Button(onClick = onMyBookings) { Text("Перейти в Мои записи") }
-                }
-                is BookingState.Submitting -> details?.let { BookingForm(it, shoes, harness, true, false, viewModel) } ?: BookingSkeleton()
+                is BookingState.DuplicateBooking -> DuplicateBookingBlock(onMyBookings)
+                BookingState.Initial, BookingState.Loading -> BookingSkeleton()
+                BookingState.Forbidden -> ErrorText("Сессия истекла. Войдите снова")
+                is BookingState.Success -> Unit
             }
         }
     }
 
     if (state is BookingState.ConflictError && details != null) {
-        AlertDialog(
-            onDismissRequest = {},
-            title = { Text("Место занято") },
-            text = { Text("Место только что занято другим клиентом. Остаток обновлён.") },
-            confirmButton = { TextButton(onClick = { viewModel.loadSlot(details!!.id) }) { Text("Обновить") } },
-            dismissButton = { TextButton(onClick = onBack) { Text("Назад") } },
-        )
+        SlotTakenDialog(onDismiss = onBack, onRefresh = { details?.let { viewModel.loadSlot(it.id) } })
     }
 }
 
 @Composable
-private fun BookingForm(
-    details: SlotDetailsItem,
-    shoes: EquipmentSelection?,
-    harness: EquipmentSelection?,
+private fun BookingFormBody(
+    details: org.example.client.features.booking.domain.SlotDetailsItem,
+    viewModel: BookingViewModel,
     submitting: Boolean,
     blocked: Boolean,
-    viewModel: BookingViewModel,
-) {
-    val slot = details.slot
-    Surface(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(formatBookingDateTime(slot.startsAt), style = MaterialTheme.typography.titleMedium)
-            Text("${formatBookingDateTime(slot.startsAt)} — ${formatBookingDateTime(slot.endsAt)}")
-            Text("${slot.format.displayName} · ${slot.instructor.fullName}")
-            Text("Одна бронь — один человек")
-        }
-    }
-    EquipmentPicker(
+    errorText: String?,
+) {    val colors = MaterialTheme.wave
+    val shoes by viewModel.shoes.collectAsState()
+    val harness by viewModel.harness.collectAsState()
+    BookingSummaryCard(details)
+    EquipmentRow(
         title = "Скальники",
         type = EquipmentType.CLIMBING_SHOES,
-        options = details.equipmentOptions,
+        details = details,
         selection = shoes,
-        onSelection = viewModel::selectShoes,
+        onSelection = { selected -> selected?.let(viewModel::selectShoes) },
     )
-    EquipmentPicker(
+    EquipmentRow(
         title = "Страховочная система",
         type = EquipmentType.HARNESS_SYSTEM,
-        options = details.equipmentOptions,
+        details = details,
         selection = harness,
-        onSelection = viewModel::selectHarness,
+        onSelection = { selected -> selected?.let(viewModel::selectHarness) },
     )
-    Surface(color = MaterialTheme.colorScheme.tertiaryContainer, modifier = Modifier.fillMaxWidth()) {
-        Text("Оплата на месте", modifier = Modifier.padding(16.dp))
-    }
-    Button(
+    Text(
+        text = errorText ?: "Одна бронь — один человек. Оплата на месте: наличные или перевод.",
+        style = MaterialTheme.typography.bodySmall,
+        color = colors.textSecondary,
+    )
+    WavePrimaryButton(
+        text = "Записаться",
         onClick = viewModel::submit,
         enabled = details.isAvailable && shoes != null && harness != null && !submitting && !blocked,
-        modifier = Modifier.fillMaxWidth(),
+        loading = submitting,
+    )
+}
+
+@Composable
+private fun DuplicateBookingBlock(onMyBookings: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth().widthIn(max = 480.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        if (submitting) CircularProgressIndicator() else Text("Подтвердить запись")
+        Text(
+            text = "Вы уже записаны на эту тренировку",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.wave.textPrimary,
+        )
+        WavePrimaryButton(text = "Перейти в Мои записи", onClick = onMyBookings)
     }
 }
 
 @Composable
-private fun BookingSuccess(confirmation: BookingConfirmation, onSchedule: () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Бронь подтверждена", style = MaterialTheme.typography.headlineSmall)
-        Text("Номер брони: ${confirmation.id}")
-        Text("Статус: Подтверждена")
-        Text("Оплата на месте")
-        Button(onClick = onSchedule, modifier = Modifier.fillMaxWidth()) { Text("Вернуться в расписание") }
-    }
+private fun ErrorText(message: String) {
+    Text(text = message, color = MaterialTheme.colorScheme.error)
+}
+
+@Composable
+private fun SlotTakenDialog(onDismiss: () -> Unit, onRefresh: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = {},
+        title = { Text("Место занято") },
+        text = { Text("Место только что занято другим клиентом. Остаток обновлён.") },
+        confirmButton = { TextButton(onClick = onRefresh) { Text("Обновить", color = MaterialTheme.wave.accent) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Назад") } },
+    )
 }

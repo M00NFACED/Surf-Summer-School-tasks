@@ -7,4 +7,8 @@ data class ScheduleFilter(
     val to: Instant? = null,
     val format: TrainingFormat? = null,
     val instructorId: String? = null,
-)
+    val onlyAvailable: Boolean = false,
+) {
+    val isEmpty: Boolean
+        get() = from == null && to == null && format == null && instructorId == null && !onlyAvailable
+}

@@ -36,15 +36,22 @@ fun AuthenticatedShell(
     var bookingOpen by rememberSaveable { mutableStateOf(false) }
     var selectedBookingId by rememberSaveable { mutableStateOf<String?>(null) }
     val selectedTab = MainTab.valueOf(selectedTabName)
+    val onRootScreen = when (selectedTab) {
+        MainTab.SCHEDULE -> selectedSlotId == null
+        MainTab.MY_BOOKINGS -> selectedBookingId == null
+        MainTab.PROFILE -> true
+    }
 
     Scaffold(
         modifier = modifier,
         bottomBar = {
-            WaveBottomBar(selectedTab) { tab ->
-                selectedTabName = tab.name
-                selectedSlotId = null
-                bookingOpen = false
-                selectedBookingId = null
+            if (onRootScreen) {
+                WaveBottomBar(selectedTab) { tab ->
+                    selectedTabName = tab.name
+                    selectedSlotId = null
+                    bookingOpen = false
+                    selectedBookingId = null
+                }
             }
         },
     ) { padding ->
@@ -53,7 +60,6 @@ fun AuthenticatedShell(
                 MainTab.SCHEDULE -> when {
                     selectedSlotId == null -> ScheduleScreen(
                         viewModel = scheduleViewModel,
-                        onLogout = onLogout,
                         onSlotClick = {
                             selectedSlotId = it
                             bookingOpen = false
@@ -62,11 +68,6 @@ fun AuthenticatedShell(
                     bookingOpen -> BookingScreen(
                         viewModel = bookingViewModel,
                         onBack = { bookingOpen = false },
-                        onSchedule = {
-                            selectedTabName = MainTab.SCHEDULE.name
-                            selectedSlotId = null
-                            bookingOpen = false
-                        },
                         onMyBookings = {
                             selectedTabName = MainTab.MY_BOOKINGS.name
                             selectedBookingId = null

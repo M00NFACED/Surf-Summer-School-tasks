@@ -61,6 +61,13 @@ class AuthViewModel(
         sendCode(AuthScreen.OTP)
     }
 
+    fun backToPhone() {
+        countdownJob?.cancel()
+        mutableCode.value = ""
+        mutableRetryAfter.value = 0
+        mutableState.value = AuthState.Initial
+    }
+
     fun verifyCode() {
         val validation = verifyCodeUseCase(mutablePhone.value, mutableCode.value)
         if (validation.isFailure) {

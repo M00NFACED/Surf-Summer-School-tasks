@@ -6,70 +6,81 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 
+private val errorLight = Color(0xFFC62828)
+private val errorContainerLight = Color(0xFFFBE0E0)
+private val onErrorContainerLight = Color(0xFF5C1010)
+private val pageLight = Color(0xFFFFFFFF)
+private val pageDark = Color(0xFF0F1513)
+private val errorDark = Color(0xFFFF8A80)
+private val errorContainerDark = Color(0xFF5C1010)
+private val onErrorContainerDark = Color(0xFFFBE0E0)
+private val scrim = Color(0x99000000)
+
 val WaveLightColorScheme: ColorScheme = lightColorScheme(
-    primary = Color(0xFF389F82),
-    onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = Color(0xFFB6F0DF),
-    onPrimaryContainer = Color(0xFF002018),
-    inversePrimary = Color(0xFF5CD6B5),
-    secondary = Color(0xFF4B9B8A),
-    onSecondary = Color(0xFFFFFFFF),
-    secondaryContainer = Color(0xFFCDEFE4),
-    onSecondaryContainer = Color(0xFF072019),
-    tertiary = Color(0xFF3F6F8F),
-    onTertiary = Color(0xFFFFFFFF),
-    tertiaryContainer = Color(0xFFC5E7FF),
-    onTertiaryContainer = Color(0xFF001E2C),
-    background = Color(0xFFF5FBF8),
-    onBackground = Color(0xFF171D1B),
-    surface = Color(0xFFF5FBF8),
-    onSurface = Color(0xFF171D1B),
-    surfaceVariant = Color(0xFFDCE9E3),
-    onSurfaceVariant = Color(0xFF3F4945),
-    surfaceTint = Color(0xFF389F82),
-    inverseSurface = Color(0xFF2B322F),
-    inverseOnSurface = Color(0xFFECF2EE),
-    error = Color(0xFFBA1A1A),
-    onError = Color(0xFFFFFFFF),
-    errorContainer = Color(0xFFFFDAD6),
-    onErrorContainer = Color(0xFF410002),
-    outline = Color(0xFF6F7975),
-    outlineVariant = Color(0xFFBEC9C3),
-    scrim = Color(0xFF000000),
+    primary = WaveLightColors.accent,
+    onPrimary = WaveLightColors.onAccent,
+    primaryContainer = WaveLightColors.accentSoft,
+    onPrimaryContainer = WaveLightColors.onAccentSoft,
+    inversePrimary = WaveDarkColors.accent,
+    secondary = WaveLightColors.accent,
+    onSecondary = WaveLightColors.onAccent,
+    secondaryContainer = WaveLightColors.chip,
+    onSecondaryContainer = WaveLightColors.onChip,
+    tertiary = WaveLightColors.accent,
+    onTertiary = WaveLightColors.onAccent,
+    tertiaryContainer = WaveLightColors.accentSoft,
+    onTertiaryContainer = WaveLightColors.onAccentSoft,
+    background = pageLight,
+    onBackground = WaveLightColors.textPrimary,
+    surface = pageLight,
+    onSurface = WaveLightColors.textPrimary,
+    surfaceVariant = WaveLightColors.card,
+    onSurfaceVariant = WaveLightColors.textSecondary,
+    surfaceTint = WaveLightColors.accent,
+    inverseSurface = WaveDarkColors.card,
+    inverseOnSurface = WaveDarkColors.textPrimary,
+    error = errorLight,
+    onError = WaveLightColors.onAccent,
+    errorContainer = errorContainerLight,
+    onErrorContainer = onErrorContainerLight,
+    outline = WaveLightColors.border,
+    outlineVariant = WaveLightColors.chip,
+    scrim = scrim,
 )
 
 val WaveDarkColorScheme: ColorScheme = darkColorScheme(
-    primary = Color(0xFF4DB6AC),
-    onPrimary = Color(0xFF00382F),
-    primaryContainer = Color(0xFF1D6B5B),
-    onPrimaryContainer = Color(0xFFB6F0DF),
-    inversePrimary = Color(0xFF389F82),
-    secondary = Color(0xFFB1D3C8),
-    onSecondary = Color(0xFF1D352D),
-    secondaryContainer = Color(0xFF334B43),
-    onSecondaryContainer = Color(0xFFCDEFE4),
-    tertiary = Color(0xFFA9CBE3),
-    onTertiary = Color(0xFF0B3448),
-    tertiaryContainer = Color(0xFF264B60),
-    onTertiaryContainer = Color(0xFFC5E7FF),
-    background = Color(0xFF0F1513),
-    onBackground = Color(0xFFDFE4E1),
-    surface = Color(0xFF0F1513),
-    onSurface = Color(0xFFDFE4E1),
-    surfaceVariant = Color(0xFF3F4945),
-    onSurfaceVariant = Color(0xFFBEC9C3),
-    surfaceTint = Color(0xFF4DB6AC),
-    inverseSurface = Color(0xFFDFE4E1),
-    inverseOnSurface = Color(0xFF2B322F),
-    error = Color(0xFFFFB4AB),
-    onError = Color(0xFF690005),
-    errorContainer = Color(0xFF93000A),
-    onErrorContainer = Color(0xFFFFDAD6),
-    outline = Color(0xFF89938E),
-    outlineVariant = Color(0xFF3F4945),
-    scrim = Color(0xFF000000),
+    primary = WaveDarkColors.accent,
+    onPrimary = WaveDarkColors.onAccent,
+    primaryContainer = WaveDarkColors.accentSoft,
+    onPrimaryContainer = WaveDarkColors.onAccentSoft,
+    inversePrimary = WaveLightColors.accent,
+    secondary = WaveDarkColors.accent,
+    onSecondary = WaveDarkColors.onAccent,
+    secondaryContainer = WaveDarkColors.chip,
+    onSecondaryContainer = WaveDarkColors.onChip,
+    tertiary = WaveDarkColors.accent,
+    onTertiary = WaveDarkColors.onAccent,
+    tertiaryContainer = WaveDarkColors.accentSoft,
+    onTertiaryContainer = WaveDarkColors.onAccentSoft,
+    background = pageDark,
+    onBackground = WaveDarkColors.textPrimary,
+    surface = pageDark,
+    onSurface = WaveDarkColors.textPrimary,
+    surfaceVariant = WaveDarkColors.card,
+    onSurfaceVariant = WaveDarkColors.textSecondary,
+    surfaceTint = WaveDarkColors.accent,
+    inverseSurface = WaveLightColors.textPrimary,
+    inverseOnSurface = WaveLightColors.card,
+    error = errorDark,
+    onError = WaveDarkColors.cardInner,
+    errorContainer = errorContainerDark,
+    onErrorContainer = onErrorContainerDark,
+    outline = WaveDarkColors.border,
+    outlineVariant = WaveDarkColors.chip,
+    scrim = scrim,
 )
 
 @Composable
@@ -77,8 +88,12 @@ fun WaveTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    MaterialTheme(
-        colorScheme = if (darkTheme) WaveDarkColorScheme else WaveLightColorScheme,
-        content = content,
-    )
+    CompositionLocalProvider(
+        LocalWaveColors provides if (darkTheme) WaveDarkColors else WaveLightColors,
+    ) {
+        MaterialTheme(
+            colorScheme = if (darkTheme) WaveDarkColorScheme else WaveLightColorScheme,
+            content = content,
+        )
+    }
 }
