@@ -87,3 +87,11 @@
 - Артефакты: booking DTO/data/repository/mapper в `features/booking/data/`, domain models/use cases в `features/booking/domain/`, `SlotDetailScreen`, `BookingScreen`, `EquipmentPicker`, `BookingViewModel` и state в `features/booking/presentation/`, navigation в `App.kt`, booking unit-тесты, `IMPLEMENTATION_PLAN.md`.
 - Проверка: `:client:shared:jvmTest` и `:client:shared:build` проходят; unit-тесты проверяют `on_site`, отсутствие participant quantity, обязательное снаряжение и rental availability; Docker smoke `OTP → GET /slots (200) → GET /slots/{id} (200) → POST /bookings (201)` вернул `confirmed` и `payment_method=on_site`; `go vet ./...` и `go test ./...` прошли.
 - Ограничения: отдельные contract/UI/race/performance tests и Android/desktop target остаются pending; `GET /bookings/my` для неоднозначного сетевого ответа ещё не реализован.
+
+### 2026-09-25 — Сессия 10
+
+- Запрос: добавить Gradle Wrapper 8.10.2 и модуль `:client:desktopApp` для интерактивного запуска UI на Windows без Android Studio.
+- Принятые решения: централизовать Kotlin/Compose plugin versions в корневом `build.gradle.kts` с `apply false`; использовать `jvm("desktop")`, `compose.desktop.currentOs` и `MainKt`; окно запускать в мобильных пропорциях 400×800 dp.
+- Артефакты: `gradlew`, `gradlew.bat`, `gradle/wrapper/`, `build.gradle.kts`, `client/desktopApp/build.gradle.kts`, `client/desktopApp/src/desktopMain/kotlin/org/example/client/Main.kt`, `settings.gradle.kts`, `IMPLEMENTATION_PLAN.md`.
+- Проверка: `.\gradlew :client:desktopApp:compileKotlinDesktop` проходит; wrapper загружает Gradle 8.10.2; общий `:client:shared:build` проверен после подключения модуля.
+- Ограничения: интерактивное окно не запускалось автоматически; для просмотра используйте команду из итогового отчёта.

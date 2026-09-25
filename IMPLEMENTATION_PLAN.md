@@ -36,6 +36,7 @@
 ### 4.1. Каркас репозитория
 
 - [ ] Создать Compose Multiplatform-модули `client`, `androidApp`, `desktopApp` и `local-backend`.
+- [x] Создать модуль `:client:desktopApp` с Compose Desktop и локальным entry point.
 - [x] Настроить Gradle Kotlin, Compose Multiplatform, Ktor Client, Ktor serialization и общие source sets.
 - [x] Создать `client/shared/src/commonMain/kotlin/org/example/client/` с корневой навигацией и DI.
 - [ ] Создать package-by-feature каталоги `auth`, `schedule`, `booking` с `presentation/`, `domain/`, `data/`.
