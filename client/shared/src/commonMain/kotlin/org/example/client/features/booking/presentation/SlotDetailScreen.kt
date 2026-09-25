@@ -57,6 +57,7 @@ fun SlotDetailScreen(
                 is BookingState.ValidationError -> DetailError(current.message) { viewModel.loadSlot(slotId) }
                 BookingState.Forbidden -> DetailError("Сессия истекла", onBack)
                 is BookingState.ConflictError -> details?.let { SlotDetailsContent(it, onBook) } ?: DetailError(current.message, onBack)
+                is BookingState.DuplicateBooking -> DetailError(current.message, onBack)
                 is BookingState.Submitting -> details?.let { SlotDetailsContent(it, onBook, true) } ?: BookingSkeleton()
                 is BookingState.Success -> details?.let { SlotDetailsContent(it, onBook) } ?: BookingSkeleton()
             }

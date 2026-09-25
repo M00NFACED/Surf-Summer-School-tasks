@@ -15,6 +15,7 @@ import org.example.client.core.network.NetworkErrorMessage
 import org.example.client.core.validation.UuidValidator
 import org.example.client.features.booking.domain.BookingError
 import org.example.client.features.booking.domain.BookingConfirmation
+import org.example.client.features.booking.domain.DuplicateBookingException
 import org.example.client.features.booking.domain.EquipmentSelection
 import org.example.client.features.booking.domain.EquipmentType
 import org.example.client.features.booking.domain.GetSlotDetailsUseCase
@@ -122,6 +123,7 @@ class BookingViewModel(
     }
 
     private fun Throwable.toBookingState(): BookingState = when (this) {
+        is DuplicateBookingException -> BookingState.DuplicateBooking(message)
         is BookingError -> when (statusCode) {
             401 -> BookingState.Forbidden
             400 -> BookingState.ValidationError(message ?: "Проверьте данные брони")

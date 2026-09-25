@@ -10,7 +10,7 @@ class GetScheduleUseCase(
     private val now: () -> Instant = { Clock.System.now() },
 ) {
     suspend operator fun invoke(filter: ScheduleFilter = ScheduleFilter()): Result<ScheduleSnapshot> {
-        val from = filter.from ?: now()
+        val from = filter.from ?: filter.to?.minus(7.days) ?: now()
         val to = filter.to ?: from.plus(7.days)
         if (to <= from) {
             return Result.failure(IllegalArgumentException("Период должен быть положительным"))

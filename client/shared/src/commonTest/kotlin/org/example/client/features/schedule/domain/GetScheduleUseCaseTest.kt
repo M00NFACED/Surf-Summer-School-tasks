@@ -47,6 +47,26 @@ class GetScheduleUseCaseTest {
     }
 
     @Test
+    fun supportsOnlyUpperDateBoundary() = runBlocking {
+        val now = Instant.parse("2026-09-25T12:00:00Z")
+        val upperBound = now + 3.days
+        var captured: ScheduleFilter? = null
+        val useCase = GetScheduleUseCase(
+            load = { filter ->
+                captured = filter
+                Result.success(ScheduleSnapshot(now, now + 7.days, emptyList()))
+            },
+            now = { now },
+        )
+
+        val result = useCase(ScheduleFilter(to = upperBound))
+
+        assertTrue(result.isSuccess)
+        assertEquals(upperBound.minus(7.days), captured?.from)
+        assertEquals(upperBound, captured?.to)
+    }
+
+    @Test
     fun rejectsInvalidPeriodAndInstructorId() = runBlocking {
         val now = Instant.parse("2026-09-25T12:00:00Z")
         val useCase = GetScheduleUseCase(load = { Result.success(ScheduleSnapshot(now, now, emptyList())) }, now = { now })

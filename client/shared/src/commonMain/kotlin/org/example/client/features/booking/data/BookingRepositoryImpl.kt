@@ -1,6 +1,7 @@
 package org.example.client.features.booking.data
 
 import org.example.client.core.storage.TokenStorage
+import org.example.client.features.booking.domain.DuplicateBookingException
 import org.example.client.features.booking.domain.SlotFullException
 
 class BookingRepositoryImpl(
@@ -16,12 +17,26 @@ class BookingRepositoryImpl(
             onSuccess = { Result.success(it) },
             onFailure = { error ->
                 if (error is BookingApiException && error.statusCode == 409) {
-                    Result.failure(SlotFullException(error.errorCode, error.message))
+                    Result.failure(
+                        if (error.errorCode == "BOOKING_EXISTS") {
+                            DuplicateBookingException(error.errorCode, error.message)
+                        } else {
+                            SlotFullException(error.errorCode, error.message)
+                        },
+                    )
                 } else {
                     Result.failure(error)
                 }
             },
         )
+    }
+
+    override suspend fun getMyBookings(): Result<MyBookingsResponse> = withToken { token ->
+        remote.getMyBookings(token)
+    }
+
+    override suspend fun cancelBooking(bookingId: String): Result<BookingResponse> = withToken { token ->
+        remote.cancelBooking(token, bookingId)
     }
 
     private suspend fun <T> withToken(block: suspend (String) -> Result<T>): Result<T> {

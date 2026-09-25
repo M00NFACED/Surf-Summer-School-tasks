@@ -57,7 +57,7 @@ class ScheduleViewModel(
 
     fun setInstructor(instructorId: String?) = filterByInstructor(instructorId)
 
-    fun setPeriod(from: Instant, to: Instant) {
+    fun setPeriod(from: Instant?, to: Instant?) {
         updateFilter(mutableFilter.value.copy(from = from, to = to))
     }
 

@@ -1,15 +1,10 @@
 package org.example.client
 
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -17,6 +12,7 @@ import kotlinx.coroutines.launch
 import org.example.client.core.network.NetworkConfig
 import org.example.client.core.network.createHttpClient
 import org.example.client.core.storage.TokenStorage
+import org.example.client.core.theme.WaveTheme
 import org.example.client.features.auth.data.AuthRepositoryImpl
 import org.example.client.features.auth.presentation.AuthScreen
 import org.example.client.features.auth.presentation.AuthState
@@ -28,15 +24,17 @@ import org.example.client.features.booking.data.BookingUseCaseGateway
 import org.example.client.features.booking.data.KtorBookingRemoteDataSource
 import org.example.client.features.booking.domain.CreateBookingUseCase
 import org.example.client.features.booking.domain.GetSlotDetailsUseCase
-import org.example.client.features.booking.presentation.BookingScreen
 import org.example.client.features.booking.presentation.BookingState
 import org.example.client.features.booking.presentation.BookingViewModel
-import org.example.client.features.booking.presentation.SlotDetailScreen
+import org.example.client.features.my_bookings.data.MyBookingsUseCaseGateway
+import org.example.client.features.my_bookings.domain.CancelBookingUseCase
+import org.example.client.features.my_bookings.domain.GetMyBookingsUseCase
+import org.example.client.features.my_bookings.presentation.MyBookingsViewModel
+import org.example.client.features.navigation.presentation.AuthenticatedShell
 import org.example.client.features.schedule.data.InMemoryScheduleCache
 import org.example.client.features.schedule.data.KtorScheduleRemoteDataSource
 import org.example.client.features.schedule.data.ScheduleRepositoryImpl
 import org.example.client.features.schedule.domain.GetScheduleUseCase
-import org.example.client.features.schedule.presentation.ScheduleScreen
 import org.example.client.features.schedule.presentation.ScheduleState
 import org.example.client.features.schedule.presentation.ScheduleViewModel
 
@@ -73,9 +71,13 @@ fun App(
     val bookingViewModel = remember(getSlotDetails, createBooking) {
         BookingViewModel(getSlotDetails, createBooking)
     }
+    val myBookingsGateway = remember(bookingRepository) { MyBookingsUseCaseGateway(bookingRepository) }
+    val getMyBookings = remember(myBookingsGateway) { GetMyBookingsUseCase(myBookingsGateway) }
+    val cancelMyBooking = remember(myBookingsGateway) { CancelBookingUseCase(myBookingsGateway) }
+    val myBookingsViewModel = remember(getMyBookings, cancelMyBooking) {
+        MyBookingsViewModel(getMyBookings, cancelMyBooking)
+    }
     val appScope = rememberCoroutineScope()
-    var selectedSlotId by remember { mutableStateOf<String?>(null) }
-    var bookingOpen by remember { mutableStateOf(false) }
 
     val authState by authViewModel.state.collectAsState()
     val scheduleState by scheduleViewModel.state.collectAsState()
@@ -88,12 +90,7 @@ fun App(
     DisposableEffect(authViewModel) { onDispose(authViewModel::close) }
     DisposableEffect(scheduleViewModel) { onDispose(scheduleViewModel::close) }
     DisposableEffect(bookingViewModel) { onDispose(bookingViewModel::close) }
-    LaunchedEffect(authState) {
-        if (authState !is AuthState.Authorized) {
-            selectedSlotId = null
-            bookingOpen = false
-        }
-    }
+    DisposableEffect(myBookingsViewModel) { onDispose(myBookingsViewModel::close) }
     LaunchedEffect(scheduleState) {
         if (scheduleState is ScheduleState.Forbidden) {
             scheduleViewModel.clearCache()
@@ -104,42 +101,20 @@ fun App(
         if (bookingState is BookingState.Forbidden) authViewModel.logout()
     }
 
-    val colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()
-    MaterialTheme(colorScheme = colorScheme) {
+    WaveTheme {
         when (val currentState = authState) {
-            is AuthState.Authorized -> {
-                val slotId = selectedSlotId
-                when {
-                    slotId == null -> ScheduleScreen(
-                        viewModel = scheduleViewModel,
-                        onLogout = {
-                            appScope.launch {
-                                scheduleViewModel.clearCache()
-                                authViewModel.logout()
-                            }
-                        },
-                        onSlotClick = {
-                            selectedSlotId = it
-                            bookingOpen = false
-                        },
-                    )
-                    bookingOpen -> BookingScreen(
-                        viewModel = bookingViewModel,
-                        onBack = { bookingOpen = false },
-                        onSchedule = {
-                            bookingOpen = false
-                            selectedSlotId = null
-                            scheduleViewModel.refresh()
-                        },
-                    )
-                    else -> SlotDetailScreen(
-                        viewModel = bookingViewModel,
-                        slotId = slotId,
-                        onBack = { selectedSlotId = null },
-                        onBook = { bookingOpen = true },
-                    )
-                }
-            }
+            is AuthState.Authorized -> AuthenticatedShell(
+                scheduleViewModel = scheduleViewModel,
+                bookingViewModel = bookingViewModel,
+                myBookingsViewModel = myBookingsViewModel,
+                client = currentState.session.client,
+                onLogout = {
+                    appScope.launch {
+                        scheduleViewModel.clearCache()
+                        authViewModel.logout()
+                    }
+                },
+            )
             is AuthState.CodeSent -> OtpVerificationScreen(
                 phone = currentState.phone,
                 code = code,

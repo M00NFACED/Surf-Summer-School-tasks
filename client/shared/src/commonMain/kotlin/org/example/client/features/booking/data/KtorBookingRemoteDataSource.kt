@@ -40,8 +40,26 @@ class KtorBookingRemoteDataSource(
             }
         }) { it.body() }
 
+    override suspend fun getMyBookings(token: String): Result<MyBookingsResponse> =
+        execute(HttpStatusCode.OK, {
+            client.get("${baseUrl.trimEnd('/')}/bookings/my") {
+                headers { append(HttpHeaders.Authorization, "Bearer $token") }
+            }
+        }) { it.body() }
+
+    override suspend fun cancelBooking(token: String, bookingId: String): Result<BookingResponse> =
+        execute(HttpStatusCode.OK, {
+            client.post(bookingUrl(bookingId)) {
+                headers { append(HttpHeaders.Authorization, "Bearer $token") }
+            }
+        }) { it.body() }
+
     private fun slotUrl(slotId: String): String = URLBuilder("${baseUrl.trimEnd('/')}/slots")
         .appendPathSegments(listOf(slotId), encodeSlash = true)
+        .buildString()
+
+    private fun bookingUrl(bookingId: String): String = URLBuilder("${baseUrl.trimEnd('/')}/bookings")
+        .appendPathSegments(listOf(bookingId, "cancel"), encodeSlash = true)
         .buildString()
 
     private suspend fun <T> execute(

@@ -31,7 +31,7 @@ fun ScheduleFiltersView(
     instructors: List<Instructor>,
     onFormatSelected: (TrainingFormat?) -> Unit,
     onInstructorSelected: (String?) -> Unit,
-    onPeriodSelected: (Instant, Instant) -> Unit,
+    onPeriodSelected: (Instant?, Instant?) -> Unit,
     onReset: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }

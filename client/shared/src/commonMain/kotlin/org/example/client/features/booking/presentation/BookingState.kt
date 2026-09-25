@@ -10,6 +10,7 @@ sealed interface BookingState {
     data object Submitting : BookingState
     data class Success(val confirmation: BookingConfirmation) : BookingState
     data class ConflictError(val message: String) : BookingState
+    data class DuplicateBooking(val message: String) : BookingState
     data class NetworkError(val message: String) : BookingState
     data class ValidationError(val message: String) : BookingState
     data object Forbidden : BookingState

@@ -33,6 +33,7 @@ fun BookingScreen(
     viewModel: BookingViewModel,
     onBack: () -> Unit,
     onSchedule: () -> Unit,
+    onMyBookings: () -> Unit,
 ) {
     val state by viewModel.state.collectAsState()
     val details by viewModel.details.collectAsState()
@@ -68,6 +69,10 @@ fun BookingScreen(
                 is BookingState.ConflictError -> {
                     Text(current.message, color = MaterialTheme.colorScheme.error)
                     details?.let { BookingForm(it, shoes, harness, isSubmitting, false, viewModel) }
+                }
+                is BookingState.DuplicateBooking -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(current.message, color = MaterialTheme.colorScheme.error)
+                    Button(onClick = onMyBookings) { Text("Перейти в Мои записи") }
                 }
                 is BookingState.Submitting -> details?.let { BookingForm(it, shoes, harness, true, false, viewModel) } ?: BookingSkeleton()
             }
