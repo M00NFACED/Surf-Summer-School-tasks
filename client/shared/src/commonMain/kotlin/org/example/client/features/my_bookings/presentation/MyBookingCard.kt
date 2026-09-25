@@ -21,8 +21,10 @@ import org.example.client.core.ui.WaveBadge
 import org.example.client.core.ui.WaveBadgeRow
 import org.example.client.core.ui.WaveBadgeTone
 import org.example.client.core.ui.WaveSlotImage
+import org.example.client.core.ui.artworkSeed
 import org.example.client.features.booking.domain.BookingStatus
 import org.example.client.features.my_bookings.domain.MyBooking
+import org.example.client.features.schedule.presentation.artworkStyle
 import org.example.client.features.schedule.presentation.badgeTone
 import org.example.client.features.schedule.presentation.formatSlotCardDate
 
@@ -37,7 +39,11 @@ fun MyBookingCard(booking: MyBooking, onClick: (String) -> Unit) {
             .clickable { onClick(booking.id) },
     ) {
         Box {
-            WaveSlotImage(modifier = Modifier.fillMaxWidth().height(168.dp).padding(8.dp))
+            WaveSlotImage(
+                style = booking.slot.format.artworkStyle(),
+                seed = artworkSeed(booking.slot.id, booking.slot.instructor.id),
+                modifier = Modifier.fillMaxWidth().height(168.dp).padding(8.dp),
+            )
             BookingStatusBadge(
                 booking = booking,
                 modifier = Modifier.align(Alignment.TopStart).padding(18.dp),

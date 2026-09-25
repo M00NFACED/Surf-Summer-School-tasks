@@ -20,6 +20,7 @@ import org.example.client.features.schedule.domain.ScheduleError
 import org.example.client.features.schedule.domain.Instructor
 import org.example.client.features.schedule.domain.ScheduleFilter
 import org.example.client.features.schedule.domain.ScheduleRepository
+import org.example.client.features.schedule.domain.ScheduleSnapshot
 import org.example.client.features.schedule.domain.TrainingFormat
 
 class ScheduleViewModel(
@@ -111,7 +112,13 @@ class ScheduleViewModel(
 
     private fun fetch() {
         requestJob = scope.launch {
-            mutableState.value = ScheduleState.Loading
+            val previous = mutableState.value.snapshot
+            val hasVisibleItems = previous?.items?.isNotEmpty() == true
+            mutableState.value = if (hasVisibleItems) {
+                ScheduleState.Refreshing(checkNotNull(previous))
+            } else {
+                ScheduleState.Loading
+            }
             try {
                 getSchedule(mutableFilter.value)
                     .onSuccess { snapshot ->
@@ -120,27 +127,50 @@ class ScheduleViewModel(
                                 .distinctBy { it.id }
                         }
                         mutableState.value = when {
-                            snapshot.isOffline -> ScheduleState.Offline(snapshot)
+                            snapshot.isOffline && snapshot.items.isNotEmpty() -> ScheduleState.Offline(
+                                snapshot,
+                                notice = if (hasVisibleItems) NetworkErrorMessage else null,
+                            )
                             snapshot.items.isEmpty() -> ScheduleState.Empty
                             else -> ScheduleState.Success(snapshot)
                         }
                     }
-                    .onFailure { error -> mutableState.value = error.toScheduleState() }
+                    .onFailure { error -> mutableState.value = error.toScheduleState(previous, hasVisibleItems) }
             } catch (error: CancellationException) {
                 throw error
             } catch (_: Throwable) {
-                mutableState.value = ScheduleState.Error(NetworkErrorMessage)
+                mutableState.value = if (hasVisibleItems) {
+                    ScheduleState.Success(checkNotNull(previous), notice = NetworkErrorMessage)
+                } else {
+                    ScheduleState.Error(NetworkErrorMessage)
+                }
             }
         }
     }
 
-    private fun Throwable.toScheduleState(): ScheduleState = when (this) {
+    private fun Throwable.toScheduleState(
+        previous: ScheduleSnapshot?,
+        hasVisibleItems: Boolean,
+    ): ScheduleState = when (this) {
         is ScheduleError -> if (statusCode == 401) {
             ScheduleState.Forbidden
         } else {
-            ScheduleState.Error(message ?: "Не удалось загрузить расписание")
+            failureOrStale(message ?: "Не удалось загрузить расписание", previous, hasVisibleItems)
         }
-        is IllegalArgumentException -> ScheduleState.Error(message ?: "Проверьте параметры расписания")
-        else -> ScheduleState.Error(NetworkErrorMessage)
+        is IllegalArgumentException -> failureOrStale(
+            message ?: "Проверьте параметры расписания",
+            previous,
+            hasVisibleItems,
+        )
+        else -> failureOrStale(NetworkErrorMessage, previous, hasVisibleItems)
+    }
+
+    private fun failureOrStale(
+        message: String,
+        previous: ScheduleSnapshot?,
+        hasVisibleItems: Boolean,
+    ): ScheduleState = when {
+        hasVisibleItems && previous != null -> ScheduleState.Success(previous, notice = message)
+        else -> ScheduleState.Error(message)
     }
 }

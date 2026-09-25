@@ -21,8 +21,10 @@ import org.example.client.core.ui.WaveBadge
 import org.example.client.core.ui.WaveBadgeRow
 import org.example.client.core.ui.WavePrimaryButton
 import org.example.client.core.ui.WaveSlotImage
+import org.example.client.core.ui.artworkSeed
 import org.example.client.features.booking.domain.EquipmentType
 import org.example.client.features.booking.domain.SlotDetailsItem
+import org.example.client.features.schedule.presentation.artworkStyle
 import org.example.client.features.schedule.presentation.badgeTone
 import org.example.client.features.schedule.presentation.formatSlotCardDate
 import org.example.client.features.schedule.presentation.formatSlotTimeRange
@@ -36,7 +38,11 @@ internal fun SlotDetailContent(
     val colors = MaterialTheme.wave
     val slot = details.slot
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        WaveSlotImage(modifier = Modifier.fillMaxWidth().height(200.dp))
+        WaveSlotImage(
+            style = slot.format.artworkStyle(),
+            seed = artworkSeed(slot.id, slot.instructor.id),
+            modifier = Modifier.fillMaxWidth().height(200.dp),
+        )
         WaveBadgeRow {
             WaveBadge(slot.format.displayName, slot.format.badgeTone())
         }

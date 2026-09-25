@@ -39,6 +39,8 @@ fun ScheduleCard(item: TrainingSlotItem, onClick: (String) -> Unit) {
             .clickable(enabled = !blocked) { UuidValidator.normalize(item.id)?.let(onClick) },
     ) {
         WaveSlotImage(
+            style = item.format.artworkStyle(),
+            seed = item.artworkSeed(),
             modifier = Modifier.fillMaxWidth().height(168.dp).padding(8.dp),
         )
         Column(

@@ -33,9 +33,11 @@ import org.example.client.core.ui.WaveCardColumn
 import org.example.client.core.ui.WavePrimaryButton
 import org.example.client.core.ui.WaveSlotImage
 import org.example.client.core.ui.WaveTopBar
+import org.example.client.core.ui.artworkSeed
 import org.example.client.features.booking.domain.BookingStatus
 import org.example.client.features.booking.domain.EquipmentSelection
 import org.example.client.features.my_bookings.domain.MyBooking
+import org.example.client.features.schedule.presentation.artworkStyle
 import org.example.client.features.schedule.presentation.badgeTone
 import org.example.client.features.schedule.presentation.formatSlotCardDate
 import org.example.client.features.schedule.presentation.formatSlotTimeRange
@@ -59,7 +61,11 @@ fun MyBookingDetailsScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Box {
-                WaveSlotImage(modifier = Modifier.fillMaxWidth().height(190.dp))
+                WaveSlotImage(
+                    style = booking.slot.format.artworkStyle(),
+                    seed = artworkSeed(booking.slot.id, booking.slot.instructor.id),
+                    modifier = Modifier.fillMaxWidth().height(190.dp),
+                )
                 BookingStatusBadge(
                     booking = booking,
                     modifier = Modifier.align(Alignment.TopStart).padding(12.dp),

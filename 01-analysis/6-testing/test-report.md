@@ -81,3 +81,73 @@
 - Реальный OTP/SMS-провайдер и production HTTPS endpoint не подключены в локальной сборке.
 - Device-level проверка dark theme, focus movement и persistent storage требует запуска на эмуляторе/устройстве.
 - Race-тест HTTP 409 должен выполняться против источника истины; client не создаёт локальное подтверждение при конфликте.
+
+## 6. Сквозной аудит соответствия скоупа
+
+Дата аудита: 2026-09-25. Проверены бриф (`01-analysis/0-customer-brief/customer-brief.md`), `BR-001..014`, `FR-001..011`, `NFR-001..007`, `01-analysis/api/openapi.yaml` и `SCR-001..008` против кода клиента.
+
+### 6.1 Матрица BR → код → тесты
+
+| BR | Требование | Реализация в клиенте | Покрытие |
+|---|---|---|---|
+| BR-001 | Самостоятельная запись клиента | `features/auth/*`, `features/booking/*`, `App.kt` | `AuthUseCasesTest`, `AuthViewModelTest` |
+| BR-002 | Информация о слоте | `TrainingSlotSummary`, `SlotDetailContent`, `ScheduleCard` | `ScheduleMapperTest`, `GetSlotDetailsUseCaseTest` |
+| BR-003 | Горизонт расписания | `GetScheduleUseCase` (7 дней по умолчанию), `ScheduleQueryBuilder` | `GetScheduleUseCaseTest`, `ScheduleQueryBuilderTest` |
+| BR-004 | Вместимость групп 8/16 | `TrainingFormat.maxCapacity`; слоты создаёт только backend, клиент не создаёт и не меняет слоты | `TrainingFormatCapacityTest` |
+| BR-005 | Бронь на одного человека | `CreateBookingRequest` без `places`, `BookingScreen` без группового степпера, текст «Одна бронь — один человек» | `CreateBookingUseCaseTest`, `BookingMapperTest` |
+| BR-006 | Своё снаряжение или прокат | `EquipmentPicker` (скальники) и `EquipmentPicker` (страховочная система) раздельно, `EquipmentSelection.Own/Rental` | `BookingMapperTest`, `CreateBookingUseCaseTest` |
+| BR-007 | Окно отмены 2 часа | `CancelBookingUseCase` сверяет `cancel_deadline` с `now`, `MyBookingDetailsScreen` блокирует кнопку | `MyBookingsUseCasesTest` |
+| BR-008 | Отмена скалодромом | `SlotStatus.CANCELLED`, `BookingStatus.CANCELLED_BY_VENUE`, вывод причины в UI | `MyBookingsMapperTest` |
+| BR-009 | Оценка инструктора | DTO `RatingDto` присутствует, пользовательский поток `SCR-008` не реализован | Не покрыто |
+| BR-010 | Push-уведомления | Регистрация push-токена в клиенте не реализована | Не покрыто |
+| BR-011 | Оплата на месте | `PaymentMethod.ON_SITE` единственный вариант, `BookingMapper` жёстко пишет `on_site` | `BookingMapperTest` |
+| BR-012 | Ограниченная роль клиента | Приложение только читает и создаёт бронь, административных сценариев нет | Статический аудит |
+| BR-013 | Источник истины, защита от конкуренции | `BookingRepositoryImpl` маппит 409 в `SlotFullException`/`DuplicateBookingException`, локальная `confirmed` не создаётся | `BookingRepositoryImplTest`, `BookingViewModelTest` |
+| BR-014 | Доступность данных через Client API | Все DTO сгенерированы по `openapi.yaml`, собственных полей и кодов ошибок нет | `ScheduleMapperTest`, `BookingMapperTest`, `MyBookingsMapperTest` |
+
+### 6.2 Матрица FR → код → тесты
+
+| FR | Реализация в клиенте | Статус | Покрытие |
+|---|---|---|---|
+| FR-001 | `PhoneEntryScreen`, `OtpVerificationScreen`, `PhoneNumberValidator` | Выполнено | `PhoneNumberValidatorTest`, `PhoneNumberVisualTransformationTest`, `AuthUseCasesTest` |
+| FR-002 | `ScheduleScreen`, `ScheduleFilterSheet`, кэш `InMemoryScheduleCache` | Выполнено | `GetScheduleUseCaseTest`, `ScheduleRepositoryImplTest`, `ScheduleViewModelTest` |
+| FR-003 | `SlotDetailScreen`, `SlotDetailContent` | Выполнено | `GetSlotDetailsUseCaseTest` |
+| FR-004 | `CreateBookingUseCase`, `BookingScreen` без группового количества | Выполнено | `CreateBookingUseCaseTest` |
+| FR-005 | `EquipmentPicker` с режимами «Своя/Прокат» и чипами размеров | Выполнено | `BookingMapperTest` |
+| FR-006 | `BookingRepositoryImpl.createBooking`, `payment_method = on_site` | Выполнено | `BookingMapperTest`, `BookingRepositoryImplTest` |
+| FR-007 | `features/my_bookings/*`, `GET /bookings/my` | Выполнено | `MyBookingsMapperTest`, `MyBookingsUseCasesTest` |
+| FR-008 | `CancelBookingUseCase`, `CancelBookingSheet` | Выполнено | `MyBookingsUseCasesTest` |
+| FR-009 | Отображение статуса и причины отмены залом | Выполнено | `MyBookingsMapperTest` |
+| FR-010 | `POST /bookings/{id}/rating` и `SCR-008` | **Не реализовано** | Нет |
+| FR-011 | Регистрация push-токена, `POST /devices` | **Не реализовано** | Нет |
+
+### 6.3 NFR
+
+| NFR | Проверка | Статус |
+|---|---|---|
+| NFR-001 | Открытие расписания ≤2 с; скелетон только при пустом списке, обновление в фоне | Выполнено архитектурно (`ScheduleState.Refreshing`), нужен прогон на устройстве |
+| NFR-002 | Отклик бронирования ≤1,5 с | Зависит от backend, измеряется во внешнем QA |
+| NFR-003 | 409 без фантомной брони | Выполнено, `BookingRepositoryImplTest` |
+| NFR-004 | Телефон только `+7XXXXXXXXXX` | `PhoneNumberValidatorTest` |
+| NFR-005 | Кэш помечается, бронь блокируется офлайн | `ScheduleRepositoryImplTest`, `ScheduleOfflineBanner` |
+| NFR-006 | Минимальная ширина 360 dp, touch target 48 dp | Выполнено, статический аудит разметки |
+| NFR-007 | Empty State расписания | `ScheduleEmptyView`, `GetScheduleUseCaseTest` |
+
+### 6.4 Подтверждение критических ограничений
+
+- **BR-004**: клиент не создаёт слоты; лимиты 8 и 16 зафиксированы в `TrainingFormat.maxCapacity` и в `TrainingSlotSummary.capacity` (1..16) — `TrainingFormatCapacityTest`.
+- **BR-005**: в `CreateBookingRequest` отсутствует количество мест, UI не содержит степпера, в форме зафиксирован текст «Одна бронь — один человек» — `CreateBookingUseCaseTest`, `BookingMapperTest`.
+- **BR-006**: `EquipmentSelections` требует отдельных полей `shoes` и `harness`, каждое со своим `own`/`rental` — `BookingMapperTest`.
+- **BR-007**: отмена блокируется после `cancel_deadline`, в шторке отмены текст «не позднее чем за 2 часа до начала тренировки» — `MyBookingsUseCasesTest`.
+- **BR-011**: `PaymentMethod.ON_SITE` — единственное значение, `on_site` не переопределяется UI — `BookingMapperTest`.
+- **BR-013**: при 409 клиент не создаёт локальную бронь, обновляет источник истины и предлагает «Обновить» либо переход в «Мои записи» — `BookingRepositoryImplTest`, `BookingViewModelTest`.
+
+### 6.5 Статус покрытия unit-тестами
+
+Автоматизировано 72 unit-теста в 25 классах: auth и ввод номера (13), валидация, сеть и тема (6), расписание, даты и артворк (26), бронирование и «Мои записи» (13), навигация и профиль (14). Отсутствуют UI-тесты на Loading/Empty/Error/Offline/Forbidden, контрактные тесты против запущенного Client API и race-тест 409 — они требуют внешнего backend и помечены Pending.
+
+### 6.6 Обнаруженные пробелы
+
+- `FR-010` (оценка инструктора, `SCR-008`) и `FR-011`/`BR-010` (push-уведомления) не реализованы в клиенте: DTO `RatingDto` и эндпоинты OpenAPI существуют, но UI и регистрация устройства отсутствуют.
+- Точные цвета, шрифты и логотип не сверены пиксельно с Figma, так как файл недоступен для прямого доступа.
+

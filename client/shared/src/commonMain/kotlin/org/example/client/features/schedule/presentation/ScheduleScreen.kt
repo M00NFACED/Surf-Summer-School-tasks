@@ -48,11 +48,12 @@ fun ScheduleScreen(
             title = "Тренировки",
             action = { WaveIconButton(Icons.AutoMirrored.Filled.List, "Фильтры") { sheetVisible = true } },
         )
-        if (state is ScheduleState.Offline) {
+        if (state is ScheduleState.Offline && (state as ScheduleState.Offline).snapshot.items.isNotEmpty()) {
             ScheduleOfflineBanner((state as ScheduleState.Offline).snapshot.cachedAtEpochMillis)
         }
+        state.notice()?.let { notice -> NoticeBanner(notice) }
         PullToRefreshBox(
-            isRefreshing = state is ScheduleState.Loading,
+            isRefreshing = state is ScheduleState.Loading || state is ScheduleState.Refreshing,
             onRefresh = viewModel::refresh,
             modifier = Modifier.fillMaxSize(),
         ) {
@@ -62,6 +63,7 @@ fun ScheduleScreen(
                 is ScheduleState.Error -> ErrorState(current.message, viewModel::refresh)
                 ScheduleState.Forbidden -> ErrorState("Сессия истекла. Войдите снова", viewModel::refresh)
                 is ScheduleState.Success -> SlotList(current.snapshot.items, onSlotClick)
+                is ScheduleState.Refreshing -> SlotList(current.snapshot.items, onSlotClick)
                 is ScheduleState.Offline -> if (current.snapshot.items.isEmpty()) {
                     ScheduleEmptyView(viewModel::resetFilters)
                 } else {
