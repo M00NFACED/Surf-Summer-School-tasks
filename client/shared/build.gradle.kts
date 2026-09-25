@@ -41,6 +41,7 @@ kotlin {
         val androidMain by getting {
             dependencies {
                 implementation("io.ktor:ktor-client-okhttp:2.3.12")
+                implementation("androidx.activity:activity-compose:1.9.3")
             }
         }
         val jvmMain by getting {

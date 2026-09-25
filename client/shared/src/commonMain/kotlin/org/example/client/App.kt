@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
+import org.example.client.core.navigation.PlatformBackHandler
 import org.example.client.core.network.NetworkConfig
 import org.example.client.core.network.createHttpClient
 import org.example.client.core.storage.TokenStorage
@@ -100,6 +101,14 @@ fun App(
     LaunchedEffect(bookingState) {
         if (bookingState is BookingState.Forbidden) authViewModel.logout()
     }
+
+    val onOtpScreen = when (val currentState = authState) {
+        is AuthState.CodeSent -> true
+        is AuthState.Loading -> currentState.screen == AuthScreen.OTP
+        is AuthState.Error -> currentState.screen == AuthScreen.OTP
+        else -> false
+    }
+    PlatformBackHandler(enabled = onOtpScreen, onBack = authViewModel::backToPhone)
 
     WaveTheme {
         when (val currentState = authState) {

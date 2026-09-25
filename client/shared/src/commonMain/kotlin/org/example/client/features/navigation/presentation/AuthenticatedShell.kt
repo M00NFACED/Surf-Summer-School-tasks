@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import org.example.client.core.navigation.PlatformBackHandler
 import org.example.client.features.auth.domain.Client
 import org.example.client.features.booking.presentation.BookingScreen
 import org.example.client.features.booking.presentation.BookingViewModel
@@ -18,6 +19,8 @@ import org.example.client.features.booking.presentation.SlotDetailScreen
 import org.example.client.features.my_bookings.presentation.MyBookingDetailsScreen
 import org.example.client.features.my_bookings.presentation.MyBookingsScreen
 import org.example.client.features.my_bookings.presentation.MyBookingsViewModel
+import org.example.client.features.navigation.domain.AuthenticatedNavigation
+import org.example.client.features.navigation.domain.MainTab
 import org.example.client.features.profile.presentation.ProfileScreen
 import org.example.client.features.schedule.presentation.ScheduleScreen
 import org.example.client.features.schedule.presentation.ScheduleViewModel
@@ -31,69 +34,70 @@ fun AuthenticatedShell(
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var selectedTabName by rememberSaveable { mutableStateOf(MainTab.SCHEDULE.name) }
-    var selectedSlotId by rememberSaveable { mutableStateOf<String?>(null) }
+    var tabName by rememberSaveable { mutableStateOf(MainTab.SCHEDULE.name) }
+    var slotId by rememberSaveable { mutableStateOf<String?>(null) }
     var bookingOpen by rememberSaveable { mutableStateOf(false) }
-    var selectedBookingId by rememberSaveable { mutableStateOf<String?>(null) }
-    val selectedTab = MainTab.valueOf(selectedTabName)
-    val onRootScreen = when (selectedTab) {
-        MainTab.SCHEDULE -> selectedSlotId == null
-        MainTab.MY_BOOKINGS -> selectedBookingId == null
-        MainTab.PROFILE -> true
+    var bookingId by rememberSaveable { mutableStateOf<String?>(null) }
+    val navigation = AuthenticatedNavigation(
+        tab = MainTab.valueOf(tabName),
+        slotId = slotId,
+        bookingOpen = bookingOpen,
+        bookingId = bookingId,
+    )
+
+    fun apply(next: AuthenticatedNavigation) {
+        tabName = next.tab.name
+        slotId = next.slotId
+        bookingOpen = next.bookingOpen
+        bookingId = next.bookingId
     }
+
+    PlatformBackHandler(
+        enabled = navigation.consumesSystemBack,
+        onBack = { apply(navigation.onSystemBack()) },
+    )
 
     Scaffold(
         modifier = modifier,
         bottomBar = {
-            if (onRootScreen) {
-                WaveBottomBar(selectedTab) { tab ->
-                    selectedTabName = tab.name
-                    selectedSlotId = null
-                    bookingOpen = false
-                    selectedBookingId = null
-                }
+            if (navigation.isRootScreen) {
+                WaveBottomBar(navigation.tab) { tab -> apply(navigation.selectTab(tab)) }
             }
         },
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-            when (selectedTab) {
+            when (navigation.tab) {
                 MainTab.SCHEDULE -> when {
-                    selectedSlotId == null -> ScheduleScreen(
+                    navigation.slotId == null -> ScheduleScreen(
                         viewModel = scheduleViewModel,
-                        onSlotClick = {
-                            selectedSlotId = it
-                            bookingOpen = false
-                        },
+                        onSlotClick = { apply(navigation.openSlot(it)) },
                     )
-                    bookingOpen -> BookingScreen(
+                    navigation.bookingOpen -> BookingScreen(
                         viewModel = bookingViewModel,
-                        onBack = { bookingOpen = false },
-                        onMyBookings = {
-                            selectedTabName = MainTab.MY_BOOKINGS.name
-                            selectedBookingId = null
-                        },
+                        onBack = { apply(navigation.closeBooking()) },
+                        onMyBookings = { apply(navigation.selectTab(MainTab.MY_BOOKINGS)) },
                     )
                     else -> SlotDetailScreen(
                         viewModel = bookingViewModel,
-                        slotId = selectedSlotId!!,
-                        onBack = { selectedSlotId = null },
-                        onBook = { bookingOpen = true },
+                        slotId = navigation.slotId!!,
+                        onBack = { apply(navigation.onSystemBack()) },
+                        onBook = { apply(navigation.openBooking()) },
                     )
                 }
                 MainTab.MY_BOOKINGS -> {
-                    val myBookingsState by myBookingsViewModel.state.collectAsState()
-                    val booking = selectedBookingId?.let { id -> myBookingsState.snapshot?.find(id) }
+                    val state by myBookingsViewModel.state.collectAsState()
+                    val booking = navigation.bookingId?.let { id -> state.snapshot?.find(id) }
                     if (booking != null) {
                         MyBookingDetailsScreen(
                             viewModel = myBookingsViewModel,
                             booking = booking,
-                            onBack = { selectedBookingId = null },
+                            onBack = { apply(navigation.onSystemBack()) },
                         )
                     } else {
                         MyBookingsScreen(
                             viewModel = myBookingsViewModel,
-                            onBookingClick = { selectedBookingId = it },
-                            onOpenSchedule = { selectedTabName = MainTab.SCHEDULE.name },
+                            onBookingClick = { apply(navigation.openMyBooking(it)) },
+                            onOpenSchedule = { apply(navigation.selectTab(MainTab.SCHEDULE)) },
                         )
                     }
                 }

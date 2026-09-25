@@ -1,13 +1,9 @@
 package org.example.client.core.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -17,11 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.example.client.core.theme.wave
 
@@ -75,32 +67,5 @@ fun WaveOutlineButton(
         modifier = modifier.fillMaxWidth().heightIn(min = 52.dp),
     ) {
         Text(text = text, style = MaterialTheme.typography.titleMedium)
-    }
-}
-
-@Composable
-fun WaveSlotImage(
-    modifier: Modifier = Modifier,
-    label: String? = null,
-) {
-    val colors = MaterialTheme.wave
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(18.dp))
-            .background(
-                Brush.linearGradient(
-                    listOf(colors.accentSoft, colors.chip, colors.accentSoft),
-                ),
-            ),
-        contentAlignment = Alignment.BottomStart,
-    ) {
-        if (label != null) {
-            Row(
-                modifier = Modifier.padding(10.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                label
-            }
-        }
     }
 }

@@ -16,7 +16,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,7 +30,7 @@ import org.example.client.core.ui.WaveTopBar
 import org.example.client.features.auth.domain.Client
 import org.example.client.features.auth.domain.PhoneNumberValidator
 
-private const val AppVersion = "1.0.0"
+private enum class ProfileDialog { RULES, SUPPORT, VERSION }
 
 @Composable
 fun ProfileScreen(
@@ -37,6 +40,7 @@ fun ProfileScreen(
     val colors = MaterialTheme.wave
     val validator = remember { PhoneNumberValidator() }
     val phone = client?.phone?.let(validator::format) ?: "не указан"
+    var dialog by remember { mutableStateOf<ProfileDialog?>(null) }
 
     Column(modifier = Modifier.fillMaxSize()) {
         WaveTopBar(title = "Профиль")
@@ -46,15 +50,22 @@ fun ProfileScreen(
         ) {
             ProfileCard(label = "Телефон", value = phone)
             Column(modifier = Modifier.fillMaxWidth()) {
-                ProfileRow("Правила клуба")
+                ProfileRow("Правила клуба", onClick = { dialog = ProfileDialog.RULES })
                 HorizontalDivider(color = colors.border)
-                ProfileRow("Поддержка")
+                ProfileRow("Поддержка", onClick = { dialog = ProfileDialog.SUPPORT })
                 HorizontalDivider(color = colors.border)
-                ProfileRow("Версия приложения", value = AppVersion)
+                ProfileRow("Версия приложения", value = "1.0.0", onClick = { dialog = ProfileDialog.VERSION })
             }
             Column(modifier = Modifier.weight(1f)) {}
             WaveOutlineButton(text = "Выйти", onClick = onLogout)
         }
+    }
+
+    when (dialog) {
+        ProfileDialog.RULES -> ClubRulesSheet(onDismiss = { dialog = null })
+        ProfileDialog.SUPPORT -> SupportDialog(onDismiss = { dialog = null })
+        ProfileDialog.VERSION -> VersionDialog(onDismiss = { dialog = null })
+        null -> Unit
     }
 }
 
@@ -74,10 +85,14 @@ private fun ProfileCard(label: String, value: String) {
 }
 
 @Composable
-private fun ProfileRow(title: String, value: String? = null) {
+private fun ProfileRow(
+    title: String,
+    value: String? = null,
+    onClick: () -> Unit,
+) {
     val colors = MaterialTheme.wave
     Row(
-        modifier = Modifier.fillMaxWidth().clickable { }.padding(vertical = 14.dp),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
